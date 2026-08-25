@@ -1,8 +1,8 @@
 {
   "meta": {
-    "generatedAt": "25/08/2026, 18:17:17",
-    "generatedAtISO": "2026-08-25T21:17:17.033Z",
-    "rowCount": 3,
+    "generatedAt": "25/08/2026, 20:37:42",
+    "generatedAtISO": "2026-08-25T23:37:42.551Z",
+    "rowCount": 4,
     "source": "GTF Auditoria 360 • publicação automática",
     "version": 2
   },
@@ -111,6 +111,41 @@
       "Saidas": 1,
       "Movimentacao_Total": 2,
       "Parecer": "PARECER NEGATIVO — Um ou mais indicadores ultrapassaram os limites aceitáveis. Acuracidade de 100,22%, assertividade de 89,60% e divergência de 10,40%. Há risco de saldo incorreto, perda financeira e falha de processo; o inventário exige tratamento imediato e validação independente."
+    },
+    {
+      "ID_Auditoria": "AUD-20260825-194012-0004",
+      "Data_Auditoria": "8/25/26",
+      "Mes_Referencia": "Aug/2026",
+      "Auditor": "Evair",
+      "Filial": "01026-GTFOODS TERRA BOA ABATEDOURO",
+      "Armazem": "2001",
+      "Grupo": "116",
+      "Itens_Auditados": 25,
+      "Itens_Sobra": 1,
+      "Itens_Falta": 1,
+      "Itens_OK": 23,
+      "Itens_Divergentes": 2,
+      "Itens_Avaria": 0,
+      "Volume_Auditado": 196,
+      "Volume_Sobra": 1,
+      "Volume_Falta": 1,
+      "Volume_Divergente": 2,
+      "Volume_Avarias": 0,
+      "Valor_Estoque": 16449.96,
+      "Valor_Sobra": 17.58,
+      "Valor_Falta": 279.46,
+      "Saldo_Liquido": -261.88,
+      "Valor_Avarias": 0,
+      "Impacto_Bruto": 297.04,
+      "Acuracidade": 101.6,
+      "Assertividade": 92,
+      "Percentual_Divergencia": 8,
+      "Percentual_Avarias_Volume": 0,
+      "Percentual_Avarias_Valor": 0,
+      "Entradas": 1,
+      "Saidas": 1,
+      "Movimentacao_Total": 2,
+      "Parecer": "PARECER NEGATIVO — Um ou mais indicadores ultrapassaram os limites aceitáveis. Acuracidade de 100,51%, assertividade de 90,00% e divergência de 10,00%. Há risco de saldo incorreto, perda financeira e falha de processo; o inventário exige tratamento imediato e validação independente."
     }
   ]
 }
