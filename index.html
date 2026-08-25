@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#071e43" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="GTF Auditoria" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<title>GTF • Auditoria 360 • Microsoft Conectado</title>
+<style>
+  :root{
+    --bg:#06162f;
+    --bg2:#071e43;
+    --panel:#0b2d63;
+    --panel2:#0d3b7f;
+    --white:#f7fbff;
+    --text:#d9e6f6;
+    --muted:#8ea7c6;
+    --line:rgba(255,255,255,.10);
+    --cyan:#16b8ff;
+    --blue:#1a89ff;
+    --lime:#b8ee21;
+    --green:#20c776;
+    --yellow:#f7d51d;
+    --orange:#ff9d16;
+    --red:#ff4d3f;
+    --shadow:0 18px 45px rgba(0,0,0,.26);
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 85% 10%, rgba(22,184,255,.13), transparent 25%),
+      radial-gradient(circle at 10% 85%, rgba(184,238,33,.06), transparent 22%),
+      linear-gradient(160deg,#041126 0%,#06162f 46%,#071e43 100%);
+    color:var(--text);
+    font-family:Inter,Segoe UI,Arial,sans-serif;
+    min-height:100vh;
+  }
+  button,select,input{font:inherit}
+  .app{max-width:1680px;margin:auto;min-height:100vh}
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:linear-gradient(180deg,rgba(10,55,118,.97),rgba(9,45,97,.97));
+    box-shadow:0 8px 30px rgba(0,0,0,.24);
+    border-bottom:1px solid rgba(255,255,255,.08);
+    backdrop-filter:blur(10px);
+  }
+  .header{display:flex;align-items:center;gap:22px;padding:18px 28px 14px}
+  .brand{display:flex;align-items:center;gap:16px;min-width:350px}
+  .logo{font-weight:900;font-size:34px;letter-spacing:-2px;color:#fff;line-height:1}
+  .brandcopy{border-left:1px solid rgba(255,255,255,.2);padding-left:16px}
+  .brandcopy strong{display:block;color:#fff;font-size:18px;letter-spacing:.2px}
+  .brandcopy small{display:block;color:#b9c8de;margin-top:3px}
+  .tagline{font-size:10px;color:var(--lime);font-weight:800;text-transform:uppercase;letter-spacing:.5px;line-height:1.3}
+  .header-actions{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .pill,.action-btn{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#fff;border-radius:999px;padding:9px 12px;font-size:12px}
+  .action-btn{cursor:pointer;background:rgba(22,184,255,.12);border-color:rgba(22,184,255,.25)}
+  .action-btn:hover{background:rgba(22,184,255,.20)}
+  .status-pill{font-weight:800;background:rgba(255,77,63,.95);border-color:transparent}
+  .tabs{display:flex;gap:6px;padding:0 28px;overflow-x:auto;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab-btn{
+    border:0;background:transparent;color:#a9c0df;padding:13px 16px;border-radius:11px 11px 0 0;
+    cursor:pointer;white-space:nowrap;font-weight:700;font-size:13px;
+  }
+  .tab-btn.active{background:#f7fbff;color:#0c3b7e}
+  .filters-wrap{padding:14px 28px 0}
+  .filters{
+    display:grid;grid-template-columns:repeat(5,minmax(150px,1fr)) auto;gap:10px;
+    background:rgba(4,17,38,.46);border:1px solid rgba(255,255,255,.08);padding:12px;border-radius:16px;
+  }
+  .filter label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#8eb1dd;margin:0 0 6px 3px;font-weight:800}
+  .filter select{
+    width:100%;background:#0a2856;color:white;border:1px solid rgba(255,255,255,.12);padding:10px 11px;border-radius:10px;outline:none;
+  }
+  .filter-actions{display:flex;align-items:end;gap:8px}
+  .filter-actions button{height:39px;border-radius:10px;border:1px solid rgba(255,255,255,.12);padding:0 13px;background:#0c3775;color:#fff;cursor:pointer}
+  .filter-actions button.primary{background:linear-gradient(90deg,#0c75d9,#159ef0);border-color:transparent}
+  main{padding:20px 28px 38px}
+  .tab{display:none;animation:fade .2s ease}
+  .tab.active{display:block}
+  @keyframes fade{from{opacity:.45;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .hero{
+    background:linear-gradient(135deg,#fdfefe,#f5f8fb);color:#0a1630;border-radius:var(--radius);padding:24px 26px;
+    display:grid;grid-template-columns:1fr 230px;gap:18px;border-left:5px solid var(--red);box-shadow:var(--shadow);
+  }
+  .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#6d7b91;font-weight:800}
+  .hero h1{margin:10px 0 8px;font-size:28px;line-height:1.12;color:#071222}
+  .hero h1 .danger{color:#cb3428}
+  .hero p{margin:0;color:#56647b;line-height:1.6;max-width:980px}
+  .hero-score{border:1px solid #dfe6ee;border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;background:#fff}
+  .ring{width:70px;height:70px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--orange) 0 60%,#e8edf2 60% 100%);position:relative;flex:0 0 auto}
+  .ring:after{content:"";position:absolute;inset:9px;background:white;border-radius:50%}
+  .ring span{position:relative;z-index:1;font-size:19px;font-weight:900;color:#081325}
+  .hero-score b{display:block;color:#0c2d65}.hero-score small{color:#7a8798;line-height:1.5}
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:16px}
+  .kpi{background:#fff;color:#0a1730;border-radius:15px;padding:17px 17px 16px;box-shadow:0 9px 26px rgba(0,0,0,.16);border:1px solid #e5ebf1;min-height:126px;position:relative;overflow:hidden}
+  .kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cyan)}
+  .kpi .label{font-size:12px;color:#6e7d91;display:flex;align-items:center;gap:7px}.kpi .value{font-size:27px;font-weight:900;margin-top:18px;letter-spacing:-.7px}.kpi .sub{font-size:11px;color:#97a0ac;margin-top:6px}
+  .kpi.good .value{color:#19aa5c}.kpi.warn .value{color:#ef9300}.kpi.bad .value{color:#d53127}
+  .section-title{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:18px 0 12px}
+  .section-title h2{margin:0;color:#fff;font-size:20px}.section-title p{margin:5px 0 0;color:var(--muted);font-size:13px}.section-title .badge{font-size:11px;background:rgba(22,184,255,.12);border:1px solid rgba(22,184,255,.25);color:#7fd8ff;border-radius:999px;padding:7px 10px}
+  .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .panel{background:linear-gradient(180deg,rgba(12,43,91,.96),rgba(8,31,68,.96));border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);min-width:0}
+  .panel.light{background:#fff;color:#0c1930;border-color:#e1e7ee}
+  .panel-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px}
+  .panel-head h3{margin:0;font-size:15px;color:#fff}.panel.light .panel-head h3{color:#0c1930}.panel-head span{font-size:11px;color:var(--muted)}
+  .metric-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+  .metric-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:12px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.06)}
+  .metric-row strong{color:#fff}.metric-row small{color:var(--muted);display:block;margin-top:3px}.metric-row .num{font-weight:900;font-size:18px;white-space:nowrap}.metric-row.red{border-left:3px solid var(--red)}.metric-row.green{border-left:3px solid var(--green)}.metric-row.orange{border-left:3px solid var(--orange)}
+  .chart{width:100%;min-height:270px}.chart svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart-compact{min-height:220px}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;color:#a9bad2;font-size:11px}.legend i{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+  .table-wrap{overflow:auto;border-radius:13px;border:1px solid rgba(255,255,255,.08)}
+  table{width:100%;border-collapse:collapse;min-width:820px;background:rgba(2,13,29,.18)}
+  th{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#8eacd0;text-align:left;padding:12px;border-bottom:1px solid rgba(255,255,255,.10);white-space:nowrap}
+  td{padding:12px;color:#e8f0fa;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;vertical-align:middle}
+  tr:hover td{background:rgba(255,255,255,.03)}
+  .chip{display:inline-flex;align-items:center;border-radius:999px;padding:5px 9px;font-size:10px;font-weight:800}.chip.red{color:#ffc7c2;background:rgba(255,77,63,.15)}.chip.green{color:#b9f6d6;background:rgba(32,199,118,.15)}.chip.orange{color:#ffdca9;background:rgba(255,157,22,.15)}.chip.blue{color:#bde7ff;background:rgba(22,184,255,.15)}
+  .insight{padding:14px;border:1px solid rgba(184,238,33,.20);background:rgba(184,238,33,.06);border-radius:14px;color:#dfe9f8;line-height:1.55;font-size:13px}.insight b{color:var(--lime)}
+  .callout-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.callout{border:1px solid rgba(22,184,255,.24);border-radius:15px;padding:15px;background:rgba(22,184,255,.05)}.callout .n{font-size:22px;color:#fff;font-weight:900;margin-top:6px}.callout .t{font-size:11px;color:#9bb4d4;text-transform:uppercase;font-weight:800;letter-spacing:.5px}
+  .status-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.status-card{padding:14px;border-radius:13px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}.status-card b{display:block;font-size:22px;color:#fff}.status-card small{color:#9eb1ca}
+  .actions-toolbar{display:flex;gap:8px;flex-wrap:wrap}.small-btn{background:#0f58ac;color:#fff;border:1px solid rgba(255,255,255,.10);border-radius:9px;padding:8px 10px;cursor:pointer}.small-btn.lime{background:#97c91a;color:#07111e;font-weight:900}
+  .action-input,.action-select{width:100%;background:#0a2856;color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 8px}
+  .footer-note{margin-top:18px;color:#7f98b8;font-size:11px;text-align:right}
+  .empty{padding:34px;text-align:center;color:#8fa8c6}
+  input[type=file]{display:none}
+  @media(max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr)}.grid-3{grid-template-columns:1fr 1fr}.filters{grid-template-columns:repeat(3,1fr)}.brand{min-width:auto}.header{align-items:flex-start}.callout-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:780px){.header{padding:14px 16px;gap:10px;flex-wrap:wrap}.brandcopy small{display:none}.brand{width:100%}.header-actions{margin-left:0;width:100%;justify-content:flex-start}.tabs{padding:0 12px}.filters-wrap{padding:10px 12px 0}.filters{grid-template-columns:1fr 1fr}.filter-actions{grid-column:1/-1}.hero{grid-template-columns:1fr;padding:18px}.hero-score{width:100%}.kpis{grid-template-columns:repeat(2,1fr)}.grid-3,.grid-2{grid-template-columns:1fr}main{padding:14px 12px 28px}.callout-grid,.status-grid{grid-template-columns:1fr 1fr}.panel{padding:14px}.hero h1{font-size:23px}}
+  @media(max-width:480px){.filters{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}.callout-grid,.status-grid{grid-template-columns:1fr}.brandcopy strong{font-size:14px}.logo{font-size:30px}}
+
+  .modal-backdrop{position:fixed;inset:0;background:rgba(1,8,20,.74);display:none;align-items:center;justify-content:center;padding:20px;z-index:100;backdrop-filter:blur(8px)}
+  .modal-backdrop.open{display:flex}
+  .modal{width:min(760px,100%);max-height:92vh;overflow:auto;background:linear-gradient(180deg,#0c2e62,#071d41);border:1px solid rgba(255,255,255,.14);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 22px;border-bottom:1px solid rgba(255,255,255,.09)}
+  .modal-head h3{margin:0;color:#fff;font-size:19px}.modal-head p{margin:4px 0 0;color:#8ea7c6;font-size:12px}
+  .modal-close{border:0;background:rgba(255,255,255,.08);color:#fff;border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:18px}
+  .modal-body{padding:20px 22px}.source-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}.source-grid .span2{grid-column:1/-1}
+  .source-field label{display:block;color:#9bb6d7;text-transform:uppercase;font-size:10px;font-weight:800;letter-spacing:.6px;margin:0 0 7px 3px}
+  .source-field input,.source-field select{width:100%;background:#071c3d;color:#fff;border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:11px 12px;outline:none}
+  .source-field input:focus,.source-field select:focus{border-color:rgba(22,184,255,.65);box-shadow:0 0 0 3px rgba(22,184,255,.10)}
+  .source-box{margin-top:14px;padding:14px 15px;border-radius:13px;background:rgba(22,184,255,.07);border:1px solid rgba(22,184,255,.18);color:#bcd0e8;font-size:12px;line-height:1.55}
+  .source-box b{color:#fff}.source-box.warn{background:rgba(247,213,29,.06);border-color:rgba(247,213,29,.22)}
+  .modal-actions{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap;padding:0 22px 22px}.modal-actions button{border:1px solid rgba(255,255,255,.12);background:#0c3775;color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer}.modal-actions button.primary{background:linear-gradient(90deg,#0c75d9,#159ef0);border-color:transparent;font-weight:800}.modal-actions button.danger{background:rgba(255,77,63,.13);color:#ffc7c2;border-color:rgba(255,77,63,.25)}
+  .source-status{display:flex;align-items:center;gap:8px;font-size:11px;color:#a8bdd7}.source-dot{width:8px;height:8px;border-radius:50%;background:#8ea7c6}.source-dot.good{background:#20c776;box-shadow:0 0 0 4px rgba(32,199,118,.10)}.source-dot.bad{background:#ff4d3f}.source-dot.busy{background:#16b8ff;animation:pulse 1s infinite alternate}@keyframes pulse{to{opacity:.35}}
+  .toast{position:fixed;right:24px;bottom:24px;z-index:150;max-width:420px;background:#071d41;color:#eaf4ff;border:1px solid rgba(255,255,255,.13);border-radius:13px;padding:13px 15px;box-shadow:0 18px 45px rgba(0,0,0,.36);display:none;font-size:12px;line-height:1.45}.toast.show{display:block;animation:fade .18s ease}.toast.good{border-left:4px solid #20c776}.toast.bad{border-left:4px solid #ff4d3f}.toast.warn{border-left:4px solid #f7d51d}
+  .action-btn.refreshing{opacity:.7;pointer-events:none}.action-btn.refreshing:before{content:'◌ ';display:inline-block;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+  .source-hidden{display:none!important}
+  @media(max-width:650px){.source-grid{grid-template-columns:1fr}.source-grid .span2{grid-column:auto}.modal-actions{justify-content:stretch}.modal-actions button{flex:1}}
+
+  /* ===== PWA V3 / dados vivos ===== */
+  .livebar{margin:10px 28px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border:1px solid rgba(22,184,255,.18);background:linear-gradient(90deg,rgba(7,30,67,.78),rgba(9,48,99,.55));border-radius:13px;box-shadow:0 10px 30px rgba(0,0,0,.12)}
+  .live-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.055);border-radius:999px;padding:7px 10px;font-size:11px;color:#dce9f9}
+  .live-dot{width:8px;height:8px;border-radius:50%;background:#20c776;box-shadow:0 0 0 4px rgba(32,199,118,.12)}
+  .live-dot.offline{background:#ff4d3f;box-shadow:0 0 0 4px rgba(255,77,63,.12)}
+  .live-spacer{flex:1}
+  .toggle{display:inline-flex;align-items:center;gap:7px;font-size:11px;color:#c7d7eb;cursor:pointer;user-select:none}.toggle input{accent-color:#b8ee21}
+  .install-btn{display:none;border:1px solid rgba(184,238,33,.35);background:rgba(184,238,33,.12);color:#eaffac;border-radius:999px;padding:7px 11px;cursor:pointer;font-weight:800;font-size:11px}.install-btn.show{display:inline-flex;align-items:center;gap:6px}
+  .decision-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}.decision-kpi{border:1px solid rgba(255,255,255,.09);background:linear-gradient(160deg,rgba(13,59,127,.55),rgba(4,17,38,.68));border-radius:14px;padding:14px}.decision-kpi small{color:#8ea7c6;display:block}.decision-kpi strong{font-size:26px;color:#fff;display:block;margin-top:5px}.decision-kpi.warn strong{color:#f7d51d}.decision-kpi.orange strong{color:#ff9d16}.decision-kpi.red strong{color:#ff6f63}.decision-kpi.green strong{color:#56e59b}
+  .action-input,.action-select,.action-note,.meeting-note{width:100%;border:1px solid rgba(255,255,255,.10);background:#071b39;color:#e9f2ff;border-radius:8px;padding:8px 9px;outline:none}.action-input:focus,.action-select:focus,.action-note:focus,.meeting-note:focus{border-color:#16b8ff;box-shadow:0 0 0 3px rgba(22,184,255,.10)}.action-note{min-width:190px;min-height:58px;resize:vertical}.action-date{min-width:135px}.action-row-overdue{background:rgba(255,77,63,.055)}
+  .status-badge{display:inline-flex;align-items:center;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:800}.status-badge.pending{background:rgba(247,213,29,.12);color:#ffe971}.status-badge.progress{background:rgba(255,157,22,.13);color:#ffbd63}.status-badge.done{background:rgba(32,199,118,.13);color:#7af0b4}.status-badge.overdue{background:rgba(255,77,63,.13);color:#ff948a}
+  .meeting-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:14px;margin-top:14px}.meeting-note{min-height:130px;resize:vertical}.activity-list{display:grid;gap:8px}.activity-item{border-left:3px solid #16b8ff;background:rgba(22,184,255,.055);border-radius:8px;padding:9px 10px;font-size:12px}.activity-item time{display:block;color:#8ea7c6;font-size:10px;margin-top:3px}
+  .mobile-nav{display:none;position:fixed;left:10px;right:10px;bottom:max(10px,env(safe-area-inset-bottom));z-index:50;background:rgba(4,17,38,.94);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.10);border-radius:18px;padding:7px;box-shadow:0 20px 50px rgba(0,0,0,.42)}.mobile-nav button{flex:1;border:0;background:transparent;color:#91a9c8;padding:7px 3px;border-radius:12px;font-size:9px;font-weight:800}.mobile-nav button span{display:block;font-size:18px;margin-bottom:3px}.mobile-nav button.active{background:#0d3b7f;color:#fff}
+  .action-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.action-modal-grid .full{grid-column:1/-1}.action-modal-grid label{font-size:11px;color:#9fb5d0;display:block;margin-bottom:5px}.action-modal-grid input,.action-modal-grid select,.action-modal-grid textarea{width:100%;border:1px solid rgba(255,255,255,.11);background:#071b39;color:#e9f2ff;border-radius:9px;padding:10px}.action-modal-grid textarea{min-height:86px;resize:vertical}
+  .sync-flash{animation:syncpulse 1s ease-in-out infinite}@keyframes syncpulse{50%{opacity:.55}}
+  @media(max-width:900px){.decision-kpis{grid-template-columns:1fr 1fr}.meeting-grid{grid-template-columns:1fr}}
+  @media(max-width:780px){body{padding-bottom:86px}.livebar{margin:10px 12px 0}.livebar .desktop-only{display:none}.mobile-nav{display:flex}.tabs{display:none}.action-modal-grid{grid-template-columns:1fr}.action-modal-grid .full{grid-column:auto}}
+
+
+  .auth-strip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 13px;border:1px solid rgba(22,184,255,.18);background:rgba(22,184,255,.055);border-radius:13px}
+  .auth-avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#0d3b7f;border:1px solid rgba(255,255,255,.16);font-weight:900;color:#fff}
+  .auth-copy{flex:1;min-width:180px}.auth-copy b{display:block;color:#fff;font-size:12px}.auth-copy small{color:#9fb5d0;font-size:10px}
+  .auth-good{border-color:rgba(32,199,118,.35)!important;background:rgba(32,199,118,.10)!important;color:#87f2bb!important}
+  .cloud-note{border-left:3px solid var(--lime);padding:10px 12px;background:rgba(184,238,33,.055);border-radius:8px;color:#c9d8ea;font-size:11px;line-height:1.5}
+  .readonly-code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:10px!important;color:#bfe7ff!important}
+</style>
+<script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="header">
+      <div class="brand">
+        <div class="logo">gtf</div>
+        <div class="tagline">FAZ O MELHOR ACONTECER<br>AUDITORIA DE ESTOQUE</div>
+        <div class="brandcopy">
+          <strong>AUDITORIA 360 • PWA</strong>
+          <small>Dados vivos, governança e plano de ação em tempo real</small>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="pill" id="sourceBadge" title="Fonte de dados atual">Fonte: Demonstração</span>
+        <span class="pill" id="baseBadge">Base: 2 auditorias</span>
+        <button class="action-btn" id="refreshBtn">⟳ Atualizar Dados</button>
+        <button class="action-btn" id="sourceBtn">⚙ Fonte de Dados</button>
+        <button class="action-btn" id="msHeaderBtn">◉ Entrar Microsoft</button>
+        <button class="install-btn" id="installBtn">⬇ Instalar App</button>
+        <input id="fileInput" type="file" accept=".csv,.json,.xlsx,.xls,.xlsm,.xlsb,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
+        <span class="pill status-pill" id="topStatus">▲ STATUS: CRÍTICO</span>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button class="tab-btn active" data-tab="resumo">▣ 1. Resumo Executivo</button>
+      <button class="tab-btn" data-tab="qualidade">◎ 2. Qualidade do Inventário</button>
+      <button class="tab-btn" data-tab="divergencias">⌕ 3. Divergências e Itens</button>
+      <button class="tab-btn" data-tab="financeiro">$ 4. Impacto Financeiro</button>
+      <button class="tab-btn" data-tab="grupos">▦ 5. Grupos e Capital</button>
+      <button class="tab-btn" data-tab="acoes">✓ 6. Plano de Ação</button>
+    </nav>
+  </header>
+
+  <div class="filters-wrap">
+    <div class="filters">
+      <div class="filter"><label>Filial</label><select id="fFilial"></select></div>
+      <div class="filter"><label>Armazém</label><select id="fArmazem"></select></div>
+      <div class="filter"><label>Grupo</label><select id="fGrupo"></select></div>
+      <div class="filter"><label>Auditor</label><select id="fAuditor"></select></div>
+      <div class="filter"><label>Mês</label><select id="fMes"></select></div>
+      <div class="filter-actions">
+        <button class="primary" id="applyBtn">Aplicar filtros</button>
+        <button id="clearBtn">Limpar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="livebar" id="livebar">
+    <span class="live-chip"><span class="live-dot" id="onlineDot"></span><b id="onlineText">Online</b></span>
+    <span class="live-chip desktop-only">● Dados vivos <b id="liveSource">OneDrive / Excel</b></span>
+    <span class="live-chip">Última sincronização: <b id="liveLastSync">—</b></span>
+    <span class="live-chip">Próxima: <b id="nextSync">manual</b></span>
+    <span class="live-spacer"></span>
+    <label class="toggle"><input type="checkbox" id="autoRefreshToggle"> Atualização automática (60s)</label>
+    <button class="small-btn" id="syncNowBtn">⟳ Sincronizar agora</button>
+  </div>
+
+  <main>
+    <section class="tab active" id="tab-resumo">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">▱ Parecer executivo — auditoria de estoque</div>
+          <h1 id="heroTitle">Auditoria consolidada com <span class="danger">Status CRÍTICO</span></h1>
+          <p id="heroText"></p>
+        </div>
+        <div class="hero-score">
+          <div class="ring" id="scoreRing"><span id="scoreValue">0%</span></div>
+          <div><b>ÍNDICE DE CONFORMIDADE</b><strong id="scoreLabel" style="font-size:18px;color:#0b1a31"></strong><small id="scoreClass"></small></div>
+        </div>
+      </div>
+
+      <div class="kpis" id="kpiRow"></div>
+
+      <div class="grid-3" style="margin-top:16px">
+        <div class="panel">
+          <div class="panel-head"><h3>⌁ Composição das Divergências</h3><span id="divCountLabel"></span></div>
+          <div class="metric-list" id="divComposition"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>◉ Exposição Financeira</h3><span>capital auditado</span></div>
+          <div class="metric-list" id="financialExposure"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>☑ Ações Recomendadas</h3><span>prioridades automáticas</span></div>
+          <div class="metric-list" id="recommendedActions"></div>
+        </div>
+      </div>
+
+      <div class="section-title"><div><h2>Leitura executiva</h2><p>Onde está o problema, quanto custa e onde agir primeiro.</p></div><span class="badge" id="filteredCountBadge"></span></div>
+      <div class="grid-2">
+        <div class="panel"><div class="panel-head"><h3>Ranking de divergência por filial</h3><span>% de itens divergentes</span></div><div class="chart" id="chartRankDiv"></div></div>
+        <div class="panel"><div class="panel-head"><h3>Ranking de impacto financeiro</h3><span>Impacto Bruto (R$)</span></div><div class="chart" id="chartRankImpact"></div></div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-qualidade">
+      <div class="section-title"><div><h2>Qualidade do Inventário</h2><p>Assertividade, acuracidade, itens corretos e evolução das auditorias.</p></div><span class="badge">Métricas em movimento</span></div>
+      <div class="callout-grid" id="qualityCards"></div>
+      <div class="grid-2" style="margin-top:14px">
+        <div class="panel"><div class="panel-head"><h3>Evolução da Assertividade</h3><span>ordem cronológica</span></div><div class="chart" id="chartAssertTrend"></div></div>
+        <div class="panel"><div class="panel-head"><h3>Evolução da Divergência</h3><span>ordem cronológica</span></div><div class="chart" id="chartDivTrend"></div></div>
+      </div>
+      <div class="grid-2" style="margin-top:14px">
+        <div class="panel"><div class="panel-head"><h3>Itens OK × Divergentes por filial</h3><span>composição unitária</span></div><div class="chart" id="chartItemsQuality"></div></div>
+        <div class="panel"><div class="panel-head"><h3>Distribuição por nível de risco</h3><span>semáforo das auditorias</span></div><div class="chart chart-compact" id="chartStatus"></div><div class="status-grid" id="statusGrid"></div></div>
+      </div>
+      <div class="insight" id="qualityInsight" style="margin-top:14px"></div>
+    </section>
+
+    <section class="tab" id="tab-divergencias">
+      <div class="section-title"><div><h2>Zona de Alerta</h2><p>Faltas, sobras e auditorias que exigem ação imediata.</p></div><span class="badge">Menos leitura. Mais decisão.</span></div>
+      <div class="callout-grid" id="divCards"></div>
+      <div class="grid-2" style="margin-top:14px">
+        <div class="panel"><div class="panel-head"><h3>Faltas × Sobras por filial</h3><span>quantidade de itens</span></div><div class="chart" id="chartShortExcess"></div></div>
+        <div class="panel"><div class="panel-head"><h3>Percentual de divergência</h3><span>ranking de criticidade</span></div><div class="chart" id="chartDivByBranch"></div></div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-head"><h3>Detalhamento das auditorias divergentes</h3><span id="auditTableCount"></span></div>
+        <div class="table-wrap"><table><thead><tr><th>ID Auditoria</th><th>Data</th><th>Filial</th><th>Auditor</th><th>Itens</th><th>Falta</th><th>Sobra</th><th>Divergência</th><th>Impacto</th><th>Status</th></tr></thead><tbody id="auditTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-financeiro">
+      <div class="section-title"><div><h2>Impacto Financeiro</h2><p>Capital auditado, perdas potenciais, sobras e saldo líquido.</p></div><span class="badge">Da divergência ao valor</span></div>
+      <div class="callout-grid" id="financeCards"></div>
+      <div class="grid-2" style="margin-top:14px">
+        <div class="panel"><div class="panel-head"><h3>Valor Falta × Valor Sobra por filial</h3><span>R$</span></div><div class="chart" id="chartValueShortExcess"></div></div>
+        <div class="panel"><div class="panel-head"><h3>Evolução do Impacto Bruto</h3><span>ordem cronológica</span></div><div class="chart" id="chartImpactTrend"></div></div>
+      </div>
+      <div class="grid-2" style="margin-top:14px">
+        <div class="panel"><div class="panel-head"><h3>Matriz de risco</h3><span>Divergência % × Impacto R$</span></div><div class="chart" id="chartRisk"></div></div>
+        <div class="panel"><div class="panel-head"><h3>Parecer das auditorias</h3><span>classificação consolidada</span></div><div class="chart chart-compact" id="chartParecer"></div><div class="insight" id="financialInsight"></div></div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-grupos">
+      <div class="section-title"><div><h2>Grupos, Capital & Performance</h2><p>Concentração de risco por grupo, auditor e movimentação.</p></div><span class="badge">Visão gerencial</span></div>
+      <div class="grid-2">
+        <div class="panel"><div class="panel-head"><h3>Impacto financeiro por grupo</h3><span>R$</span></div><div class="chart" id="chartGroupImpact"></div></div>
+        <div class="panel"><div class="panel-head"><h3>Divergência por grupo</h3><span>% ponderado</span></div><div class="chart" id="chartGroupDiv"></div></div>
+      </div>
+      <div class="grid-2" style="margin-top:14px">
+        <div class="panel"><div class="panel-head"><h3>Performance por auditor</h3><span>assertividade média ponderada</span></div><div class="chart" id="chartAuditor"></div></div>
+        <div class="panel"><div class="panel-head"><h3>Movimentação × Divergência</h3><span>relação operacional</span></div><div class="chart" id="chartMovement"></div></div>
+      </div>
+      <div class="panel" style="margin-top:14px"><div class="panel-head"><h3>Resumo por grupo</h3><span>capital e criticidade</span></div><div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Auditorias</th><th>Itens</th><th>Assertividade</th><th>Divergência</th><th>Capital</th><th>Impacto</th><th>Risco</th></tr></thead><tbody id="groupTable"></tbody></table></div></div>
+    </section>
+
+    <section class="tab" id="tab-acoes">
+      <div class="section-title"><div><h2>Painel de Decisões</h2><p>Da reunião para a execução: responsáveis, prazos, status, observações e acompanhamento.</p></div><div class="actions-toolbar"><button class="small-btn lime" id="addActionBtn">＋ Nova Ação</button><button class="small-btn" id="exportActionsBtn">⇩ Exportar CSV</button><button class="small-btn" id="saveActionsBtn">Salvar ações</button></div></div>
+      <div class="decision-kpis" id="actionKpis"></div>
+      <div class="panel">
+        <div class="panel-head"><h3>Plano de Ação Corretiva & Governança</h3><span id="actionSummary">acompanhamento contínuo</span></div>
+        <div class="table-wrap"><table><thead><tr><th>Indicador</th><th>Problema Identificado</th><th>Ação Recomendada</th><th>Responsável</th><th>Prazo</th><th>Status</th><th>Observações</th><th>Ações</th></tr></thead><tbody id="actionTable"></tbody></table></div>
+      </div>
+      <div class="meeting-grid">
+        <div class="panel"><div class="panel-head"><h3>Notas da Reunião</h3><span>salvas automaticamente</span></div><textarea id="meetingNotes" class="meeting-note" placeholder="Registre decisões, pendências, responsáveis e próximos passos..."></textarea></div>
+        <div class="panel"><div class="panel-head"><h3>Atividade Recente</h3><span>governança</span></div><div class="activity-list" id="activityList"></div></div>
+      </div>
+      <div class="insight" style="margin-top:14px"><b>A reunião termina. O plano continua.</b> Cada decisão fica registrada, com responsável, prazo, observação e status até a conclusão.</div>
+    </section>
+
+    <div class="footer-note" id="footerNote"></div>
+  </main>
+</div>
+
+
+<div class="modal-backdrop" id="sourceModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sourceModalTitle">
+    <div class="modal-head">
+      <div><h3 id="sourceModalTitle">Microsoft OneDrive • Fonte Única</h3><p>O mesmo aplicativo funciona no computador e, quando instalado, no celular. A base de auditorias vem do Excel no OneDrive e o Plano de Ação é sincronizado na nuvem.</p></div>
+      <button class="modal-close" id="sourceCloseBtn" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="source-grid">
+        <div class="source-field span2">
+          <label>Modo de conexão</label>
+          <select id="sourceType">
+            <option value="graph">Microsoft OneDrive direto • Produção</option>
+            <option value="local">Excel sincronizado • contingência/local</option>
+          </select>
+        </div>
+
+        <div id="graphFields" class="span2 source-grid">
+          <div class="source-field span2"><label>Link do Excel no OneDrive</label><input id="oneDriveUrl" type="url" value="https://1drv.ms/x/c/25b8eabd5df737ed/IQCTccyHz20KS6xoAECcMFfdAbVvfZOCTnAuuF-FGkBBNIQ?e=nqBlCX" /></div>
+          <div class="source-field"><label>Application (Client) ID</label><input id="msClientId" value="6614d0c7-4b2e-40e6-9970-c7b285806a07" readonly /></div>
+          <div class="source-field"><label>Contas permitidas</label><select id="msTenant"><option value="common">Corporativa + Microsoft pessoal</option><option value="consumers">Somente Microsoft pessoal</option><option value="organizations">Somente corporativa/escolar</option></select></div>
+          <div class="source-field"><label>Aba do Excel</label><input id="excelSheetName" value="AUDITORIAS SALVAS" /></div>
+          <div class="source-field"><label>Linha do cabeçalho</label><input id="excelHeaderRow" inputmode="numeric" value="4" /></div>
+          <div class="source-field span2"><label>Arquivo central do Plano de Ação</label><input id="cloudStateFile" value="GTF_Auditoria_360_estado.json" /></div>
+          <div class="source-field span2"><label>URI de redirecionamento que deve ser cadastrada no Microsoft Entra</label><input id="redirectUriDisplay" class="readonly-code" readonly /></div>
+          <div class="source-field span2">
+            <div class="auth-strip">
+              <div class="auth-avatar" id="msAvatar">M</div>
+              <div class="auth-copy"><b id="msAccountName">Microsoft não conectado</b><small id="msAccountUser">Entre com a conta que possui acesso à planilha.</small></div>
+              <button class="small-btn lime" id="msLoginBtn" type="button">Entrar com Microsoft</button>
+              <button class="small-btn" id="msLogoutBtn" type="button">Sair</button>
+              <button class="small-btn" id="testGraphBtn" type="button">Testar conexão</button>
+              <button class="small-btn" id="openOneDriveBtn" type="button">Abrir Excel</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="localFields" class="span2 source-grid source-hidden">
+          <div class="source-field"><label>Arquivo local conectado</label><input id="localFileName" readonly placeholder="Nenhum arquivo selecionado" /></div>
+          <div class="source-field"><label>Aba do Excel</label><input id="localSheetName" value="AUDITORIAS SALVAS" /></div>
+          <div class="source-field"><label>Linha do cabeçalho</label><input id="localHeaderRow" value="4" /></div>
+          <div class="source-field"><label>Uso</label><input readonly value="Contingência / teste sem nuvem" /></div>
+          <div class="source-field span2"><button class="small-btn lime" id="chooseLocalBtn" type="button">Selecionar .xlsm sincronizado</button></div>
+        </div>
+
+        <div class="source-field"><label>Atualização</label><select id="refreshOnOpen"><option value="yes">Atualizar ao abrir</option><option value="no">Somente pelo botão</option></select></div>
+        <div class="source-field"><label>Status</label><div class="source-status" style="min-height:39px;padding:0 4px"><span class="source-dot" id="sourceDot"></span><span id="sourceStatusText">Aguardando configuração</span></div></div>
+      </div>
+      <div class="source-box" id="sourceHelp"><b>Microsoft Entra configurado:</b> Client ID já integrado ao aplicativo. Para o teste local, abra pelo iniciador e acesse <b>http://localhost:3000/</b>. Depois clique em <b>Entrar com Microsoft</b>. Nenhuma senha é armazenada pelo PWA.</div>
+      <div class="cloud-note">Plano de Ação, responsáveis, prazos, status, observações, notas da reunião e histórico serão gravados em <b>GTF_Auditoria_360_estado.json</b>, na mesma pasta do Excel. Assim computador e celular veem o mesmo plano.</div>
+    </div>
+    <div class="modal-actions">
+      <button class="danger" id="demoBtn" type="button">Usar demonstração</button>
+      <button id="sourceCancelBtn" type="button">Cancelar</button>
+      <button class="primary" id="saveSourceBtn" type="button">Salvar Configuração</button>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop" id="actionModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="actionModalTitle">
+    <div class="modal-head"><div><h3 id="actionModalTitle">Nova Ação</h3><p>Transforme uma divergência em decisão acompanhável.</p></div><button class="modal-close" id="actionCloseBtn">×</button></div>
+    <div class="modal-body">
+      <div class="action-modal-grid">
+        <div><label>Indicador</label><input id="mIndicador" placeholder="Ex.: Divergência" /></div>
+        <div><label>Responsável</label><input id="mResponsavel" placeholder="Ex.: Logística" /></div>
+        <div class="full"><label>Problema identificado</label><textarea id="mProblema" placeholder="Descreva o problema identificado..."></textarea></div>
+        <div class="full"><label>Ação recomendada</label><textarea id="mAcao" placeholder="Descreva o que precisa ser feito..."></textarea></div>
+        <div><label>Prazo</label><input id="mPrazo" type="date" /></div>
+        <div><label>Status</label><select id="mStatus"><option>Pendente</option><option>Em Andamento</option><option>Concluído</option></select></div>
+        <div class="full"><label>Observações</label><textarea id="mObservacoes" placeholder="Notas, evidências, dependências..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-actions"><button id="actionCancelBtn">Cancelar</button><button class="primary" id="actionSaveBtn">Salvar Ação</button></div>
+  </div>
+</div>
+
+<nav class="mobile-nav" id="mobileNav" aria-label="Navegação móvel">
+  <button class="active" data-tab="resumo"><span>⌂</span>Resumo</button>
+  <button data-tab="qualidade"><span>◎</span>Qualidade</button>
+  <button data-tab="divergencias"><span>⚠</span>Diverg.</button>
+  <button data-tab="financeiro"><span>$</span>Impacto</button>
+  <button data-tab="acoes"><span>✓</span>Ações</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_DATA = [
+  {
+    ID_Auditoria:"AUD-20260823-144511-0001", Data_Auditoria:"23/08/2026", Mes_Referencia:"ago/2026", Auditor:"kelvin",
+    Filial:"01001-GTFOODS MARINGA MATRIZ", Armazem:"2001", Grupo:"115", Itens_Auditados:88, Itens_Sobra:2, Itens_Falta:6, Itens_OK:80, Itens_Divergentes:8, Itens_Avaria:0,
+    Volume_Auditado:13717, Volume_Sobra:30, Volume_Falta:72.5, Volume_Divergente:102.5, Volume_Avarias:0,
+    Valor_Estoque:53010.09, Valor_Sobra:126.11, Valor_Falta:245.85, Saldo_Liquido:-119.74, Valor_Avarias:0, Impacto_Bruto:371.96,
+    Acuracidade:100.23, Assertividade:90.91, Percentual_Divergencia:9.09, Percentual_Avarias_Volume:0, Percentual_Avarias_Valor:0,
+    Entradas:30, Saidas:72.5, Movimentacao_Total:102.5, Parecer:"PARECER NEGATIVO", Data_Hora_Registro:"23/08/2026 14:45", Usuario_Registro:"Sillas Carvalho", Observacoes:""
+  },
+  {
+    ID_Auditoria:"AUD-20260823-151913-0002", Data_Auditoria:"23/08/2026", Mes_Referencia:"ago/2026", Auditor:"EDER",
+    Filial:"01026-GTFOODS TERRA BOA ABATEDOURO", Armazem:"2001", Grupo:"115", Itens_Auditados:37, Itens_Sobra:2, Itens_Falta:3, Itens_OK:32, Itens_Divergentes:5, Itens_Avaria:0,
+    Volume_Auditado:2709, Volume_Sobra:3, Volume_Falta:6, Volume_Divergente:9, Volume_Avarias:0,
+    Valor_Estoque:7700.22, Valor_Sobra:0.48, Valor_Falta:14.37, Saldo_Liquido:-13.89, Valor_Avarias:0, Impacto_Bruto:14.85,
+    Acuracidade:100.18, Assertividade:86.49, Percentual_Divergencia:13.51, Percentual_Avarias_Volume:0, Percentual_Avarias_Valor:0,
+    Entradas:3, Saidas:6, Movimentacao_Total:9, Parecer:"PARECER NEGATIVO", Data_Hora_Registro:"23/08/2026 15:19", Usuario_Registro:"Sillas Carvalho", Observacoes:""
+  }
+];
+
+let DATA = JSON.parse(localStorage.getItem('gtf_audit_cached_data') || 'null') || JSON.parse(JSON.stringify(DEFAULT_DATA));
+let SOURCE = JSON.parse(localStorage.getItem('gtf_audit_source_v4') || 'null') || {
+  type:'graph', clientId:'6614d0c7-4b2e-40e6-9970-c7b285806a07', tenant:'common',
+  oneDriveUrl:'https://1drv.ms/x/c/25b8eabd5df737ed/IQCTccyHz20KS6xoAECcMFfdAbVvfZOCTnAuuF-FGkBBNIQ?e=nqBlCX',
+  excelSheetName:'AUDITORIAS SALVAS', excelHeaderRow:4,
+  stateFileName:'GTF_Auditoria_360_estado.json', fileName:'', refreshOnOpen:'yes', lastUpdated:''
+};
+// Migração automática para o aplicativo Microsoft Entra já registrado.
+if(!SOURCE.clientId){SOURCE.clientId='6614d0c7-4b2e-40e6-9970-c7b285806a07';SOURCE.tenant=SOURCE.tenant||'common';}
+if(!SOURCE.oneDriveUrl)SOURCE.oneDriveUrl='https://1drv.ms/x/c/25b8eabd5df737ed/IQCTccyHz20KS6xoAECcMFfdAbVvfZOCTnAuuF-FGkBBNIQ?e=nqBlCX';
+if(!SOURCE.excelSheetName)SOURCE.excelSheetName='AUDITORIAS SALVAS';
+if(!SOURCE.excelHeaderRow)SOURCE.excelHeaderRow=4;
+if(!SOURCE.stateFileName)SOURCE.stateFileName='GTF_Auditoria_360_estado.json';
+localStorage.setItem('gtf_audit_source_v4',JSON.stringify(SOURCE));
+
+let CURRENT_LOCAL_FILE = null;
+let ACTIONS = JSON.parse(localStorage.getItem('gtf_audit_actions') || 'null') || [
+  {id:'ACT-001',indicador:'Acuracidade',problema:'Validar precisão financeira dos itens de maior valor',acao:'Executar revisão amostral e reconciliação físico × sistema',responsavel:'Setor de Estoque',prazo:'2026-09-08',status:'Pendente',observacoes:'Priorizar itens classe A.'},
+  {id:'ACT-002',indicador:'Assertividade',problema:'Quantidade de itens divergentes acima do alvo',acao:'Implementar recontagem cega dos itens divergentes',responsavel:'Equipe de Auditoria',prazo:'2026-09-03',status:'Pendente',observacoes:'Recontagem independente do primeiro auditor.'},
+  {id:'ACT-003',indicador:'Divergência',problema:'Faltas físicas superiores às sobras',acao:'Investigar baixa, expedição e apontamentos de consumo',responsavel:'Logística',prazo:'2026-09-13',status:'Em Andamento',observacoes:'Cruzar movimentações do período.'},
+  {id:'ACT-004',indicador:'Impacto Financeiro',problema:'Capital exposto por diferenças físicas',acao:'Priorizar SKUs de maior impacto financeiro',responsavel:'Controladoria',prazo:'2026-08-31',status:'Pendente',observacoes:'Apresentar top 10 por valor.'}
+];
+let ACTIVITY = JSON.parse(localStorage.getItem('gtf_audit_activity') || 'null') || [];
+let CLOUD_STATE = {meetingNotesUpdatedAt:'', updatedAt:''};
+let GRAPH_ITEM = null;
+let MSAL_APP = null;
+let CLOUD_SAVE_TIMER = null;
+let EDIT_ACTION_INDEX = null;
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmtBRL = n => new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(n||0));
+const fmtN = (n,d=0) => new Intl.NumberFormat('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}).format(Number(n||0));
+const fmtPct = n => `${fmtN(n,2)}%`;
+const sum = (arr,k) => arr.reduce((a,r)=>a+Number(r[k]||0),0);
+const avg = (arr,k) => arr.length ? arr.reduce((a,r)=>a+Number(r[k]||0),0)/arr.length : 0;
+const weighted = (arr,numKey,weightKey) => {const w=sum(arr,weightKey);return w?arr.reduce((a,r)=>a+Number(r[numKey]||0)*Number(r[weightKey]||0),0)/w:0};
+const shortBranch = s => String(s||'').replace(/^\d+-GTFOODS\s*/i,'').replace(/\s{2,}/g,' ').trim();
+const riskOf = d => d<=2?'Conforme':d<=5?'Atenção':d<=10?'Alto':'Crítico';
+const riskColor = r => ({'Conforme':'#20c776','Atenção':'#f7d51d','Alto':'#ff9d16','Crítico':'#ff4d3f'}[r]||'#16b8ff');
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function currentData(){
+  const filters={Filial:$('#fFilial').value,Armazem:$('#fArmazem').value,Grupo:$('#fGrupo').value,Auditor:$('#fAuditor').value,Mes_Referencia:$('#fMes').value};
+  return DATA.filter(r=>Object.entries(filters).every(([k,v])=>!v || String(r[k])===v));
+}
+
+function overall(arr){
+  const audited=sum(arr,'Itens_Auditados'), ok=sum(arr,'Itens_OK'), div=sum(arr,'Itens_Divergentes');
+  const assert=audited?ok/audited*100:0, divergence=audited?div/audited*100:0;
+  const capital=sum(arr,'Valor_Estoque'), impact=sum(arr,'Impacto_Bruto');
+  const acur=weighted(arr,'Acuracidade','Valor_Estoque') || avg(arr,'Acuracidade');
+  const avVol=sum(arr,'Volume_Auditado')?sum(arr,'Volume_Avarias')/sum(arr,'Volume_Auditado')*100:0;
+  const score=Math.max(0,Math.min(100,100-divergence*4-avVol*2));
+  return {audited,ok,div,assert,divergence,capital,impact,acur,avVol,shortage:sum(arr,'Valor_Falta'),excess:sum(arr,'Valor_Sobra'),balance:sum(arr,'Saldo_Liquido'),itemsShort:sum(arr,'Itens_Falta'),itemsExcess:sum(arr,'Itens_Sobra'),itemsAvaria:sum(arr,'Itens_Avaria'),movement:sum(arr,'Movimentacao_Total'),score,risk:riskOf(divergence)};
+}
+
+function aggregate(arr,key){
+  const m=new Map();
+  arr.forEach(r=>{const v=String(r[key]??'Não informado');if(!m.has(v))m.set(v,[]);m.get(v).push(r)});
+  return [...m.entries()].map(([name,rows])=>({name,rows,o:overall(rows)}));
+}
+
+function fillSelect(id,key){
+  const el=$(id), prev=el.value;
+  const vals=[...new Set(DATA.map(r=>String(r[key]??'')).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR',{numeric:true}));
+  el.innerHTML='<option value="">Todos</option>'+vals.map(v=>`<option value="${esc(v)}">${esc(key==='Filial'?shortBranch(v):v)}</option>`).join('');
+  if(vals.includes(prev))el.value=prev;
+}
+function initFilters(){fillSelect('#fFilial','Filial');fillSelect('#fArmazem','Armazem');fillSelect('#fGrupo','Grupo');fillSelect('#fAuditor','Auditor');fillSelect('#fMes','Mes_Referencia')}
+
+function kpi(label,value,sub,cls='') {return `<div class="kpi ${cls}"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`}
+
+function renderSummary(arr){
+  const o=overall(arr);
+  $('#topStatus').textContent=`▲ STATUS: ${o.risk.toUpperCase()}`;
+  $('#topStatus').style.background=riskColor(o.risk);
+  $('#heroTitle').innerHTML=`Auditoria consolidada com <span class="danger" style="color:${riskColor(o.risk)}">Status ${o.risk.toUpperCase()}</span>`;
+  const branches=aggregate(arr,'Filial').sort((a,b)=>b.o.divergence-a.o.divergence);
+  const worst=branches[0];
+  $('#heroText').textContent = arr.length ? `Foram consideradas ${arr.length} auditoria(s), totalizando ${fmtN(o.audited)} itens. A assertividade consolidada é de ${fmtPct(o.assert)} e a divergência de ${fmtPct(o.divergence)}. O impacto bruto soma ${fmtBRL(o.impact)}${worst?`, com maior divergência em ${shortBranch(worst.name)} (${fmtPct(worst.o.divergence)}).`:'.'}` : 'Nenhum registro atende aos filtros selecionados.';
+  $('#scoreValue').textContent=`${fmtN(o.score,0)}%`;$('#scoreLabel').textContent=`${fmtN(o.score,1)}% / 100%`;$('#scoreClass').textContent=`Classificação ${o.risk}`;
+  $('#scoreRing').style.background=`conic-gradient(${riskColor(o.risk)} 0 ${o.score}%, #e8edf2 ${o.score}% 100%)`;
+  $('#kpiRow').innerHTML = [
+    kpi('▣ Itens Auditados',fmtN(o.audited),'100% da amostra'),
+    kpi('◉ Acuracidade',fmtPct(o.acur),'média ponderada',o.acur>=99?'good':'warn'),
+    kpi('☑ Assertividade',fmtPct(o.assert),'itens OK / auditados',o.assert>=95?'good':o.assert>=90?'warn':'bad'),
+    kpi('△ Divergência',fmtPct(o.divergence),o.risk,o.divergence<=5?'good':o.divergence<=10?'warn':'bad'),
+    kpi('♢ Avarias',fmtPct(o.avVol),`${fmtN(o.itemsAvaria)} itens`,o.avVol===0?'good':'warn'),
+    kpi('$ Impacto Bruto',fmtBRL(o.impact),o.capital?`${fmtN(o.impact/o.capital*100,3)}% do capital`:'sem capital')
+  ].join('');
+  $('#divCountLabel').textContent=`${fmtN(o.div)} itens divergentes`;
+  const totalPhys=o.itemsShort+o.itemsExcess+o.itemsAvaria || 1;
+  $('#divComposition').innerHTML=`
+    <div class="metric-row red"><div><strong>↘ Faltas Físicas (${fmtN(o.itemsShort)} itens)</strong><small>Necessita recontagem e causa raiz</small></div><div class="num" style="color:#ff8378">${fmtBRL(o.shortage)}<small>${fmtN(o.itemsShort/totalPhys*100,1)}% da ocorrência</small></div></div>
+    <div class="metric-row green"><div><strong>↗ Sobras Físicas (${fmtN(o.itemsExcess)} itens)</strong><small>Validar entradas e apontamentos</small></div><div class="num" style="color:#61e7a0">${fmtBRL(o.excess)}<small>${fmtN(o.itemsExcess/totalPhys*100,1)}% da ocorrência</small></div></div>
+    <div class="metric-row orange"><div><strong>◌ Avarias (${fmtN(o.itemsAvaria)} itens)</strong><small>Revisar armazenagem e manuseio</small></div><div class="num" style="color:#ffd17e">${fmtBRL(sum(arr,'Valor_Avarias'))}</div></div>`;
+  $('#financialExposure').innerHTML=`
+    <div class="metric-row"><div><strong>Capital Total Auditado</strong></div><div class="num">${fmtBRL(o.capital)}</div></div>
+    <div class="metric-row red"><div><strong>Impacto Bruto</strong></div><div class="num" style="color:#ff8378">${fmtBRL(o.impact)}</div></div>
+    <div class="metric-row"><div><strong>Impacto Líquido</strong></div><div class="num">${fmtBRL(o.balance)}</div></div>
+    <div class="metric-row"><div><strong>% Capital Afetado</strong></div><div class="num">${o.capital?fmtPct(o.impact/o.capital*100):'0,00%'}</div></div>`;
+  const acts=[];
+  if(o.divergence>5) acts.push(['Divergência','Implementar recontagem cega e investigar causa','Em andamento']);
+  if(o.assert<95) acts.push(['Assertividade','Revisar processo de contagem e apontamento','Pendente']);
+  if(o.shortage>o.excess) acts.push(['Faltas','Investigar baixas, expedição e consumo','Pendente']);
+  if(o.impact>0) acts.push(['Impacto','Priorizar SKUs/filiais de maior exposição','Pendente']);
+  if(!acts.length)acts.push(['Controle','Manter rotina e acompanhamento','Conforme']);
+  $('#recommendedActions').innerHTML=acts.slice(0,4).map(a=>`<div class="metric-row"><div><strong>${esc(a[0])}</strong><small>${esc(a[1])}</small></div><span class="chip ${a[2]==='Conforme'?'green':a[2].includes('andamento')?'orange':'blue'}">${esc(a[2])}</span></div>`).join('');
+  $('#filteredCountBadge').textContent=`${arr.length} de ${DATA.length} registros`;
+
+  const branchData=branches.map(x=>({label:shortBranch(x.name),value:x.o.divergence}));
+  barChart('chartRankDiv',branchData,{suffix:'%',color:'#ff9d16',horizontal:true});
+  barChart('chartRankImpact',branches.slice().sort((a,b)=>b.o.impact-a.o.impact).map(x=>({label:shortBranch(x.name),value:x.o.impact})),{prefix:'R$ ',color:'#16b8ff',horizontal:true,money:true});
+}
+
+function renderQuality(arr){
+  const o=overall(arr);
+  $('#qualityCards').innerHTML=`
+    <div class="callout"><div class="t">Assertividade</div><div class="n">${fmtPct(o.assert)}</div><small>Itens corretos sobre auditados</small></div>
+    <div class="callout"><div class="t">Acuracidade</div><div class="n">${fmtPct(o.acur)}</div><small>Média ponderada pelo capital</small></div>
+    <div class="callout"><div class="t">Itens OK</div><div class="n">${fmtN(o.ok)}</div><small>de ${fmtN(o.audited)} auditados</small></div>
+    <div class="callout"><div class="t">Itens Divergentes</div><div class="n">${fmtN(o.div)}</div><small>${fmtPct(o.divergence)} do total</small></div>`;
+  const ordered=arr.slice().sort((a,b)=>parseDateTime(a.Data_Hora_Registro)-parseDateTime(b.Data_Hora_Registro));
+  lineChart('chartAssertTrend',ordered.map(r=>({label:shortDate(r.Data_Hora_Registro||r.Data_Auditoria),value:Number(r.Assertividade)})),{suffix:'%',color:'#20c776',min:0,max:100});
+  lineChart('chartDivTrend',ordered.map(r=>({label:shortDate(r.Data_Hora_Registro||r.Data_Auditoria),value:Number(r.Percentual_Divergencia)})),{suffix:'%',color:'#ff4d3f',min:0});
+  const branches=aggregate(arr,'Filial');
+  groupedBarChart('chartItemsQuality',branches.map(x=>({label:shortBranch(x.name),a:x.o.ok,b:x.o.div})),{aLabel:'Itens OK',bLabel:'Divergentes',aColor:'#20c776',bColor:'#ff4d3f'});
+  const counts={'Conforme':0,'Atenção':0,'Alto':0,'Crítico':0};arr.forEach(r=>counts[riskOf(Number(r.Percentual_Divergencia)||0)]++);
+  donutChart('chartStatus',Object.entries(counts).map(([label,value])=>({label,value,color:riskColor(label)})));
+  $('#statusGrid').innerHTML=Object.entries(counts).map(([k,v])=>`<div class="status-card"><b style="color:${riskColor(k)}">${v}</b><small>${k}</small></div>`).join('');
+  const worst=branches.sort((a,b)=>b.o.divergence-a.o.divergence)[0];
+  $('#qualityInsight').innerHTML=arr.length?`<b>Diagnóstico:</b> a assertividade consolidada é de ${fmtPct(o.assert)}. ${worst?`A maior divergência está em <b>${esc(shortBranch(worst.name))}</b>, com ${fmtPct(worst.o.divergence)}.`:''} ${o.divergence>5?'O nível atual exige tratamento das causas e recontagem dos itens divergentes.':'O nível atual está dentro de uma faixa controlável.'}`:'Nenhum dado disponível para esta combinação de filtros.';
+}
+
+function renderDivergences(arr){
+  const o=overall(arr);const branches=aggregate(arr,'Filial');
+  $('#divCards').innerHTML=`
+    <div class="callout"><div class="t">Faltas Físicas</div><div class="n" style="color:#ff8378">${fmtN(o.itemsShort)}</div><small>${fmtBRL(o.shortage)} de impacto</small></div>
+    <div class="callout"><div class="t">Sobras Físicas</div><div class="n" style="color:#61e7a0">${fmtN(o.itemsExcess)}</div><small>${fmtBRL(o.excess)} de impacto</small></div>
+    <div class="callout"><div class="t">Itens Divergentes</div><div class="n">${fmtN(o.div)}</div><small>${fmtPct(o.divergence)} do total</small></div>
+    <div class="callout"><div class="t">Volume Divergente</div><div class="n">${fmtN(sum(arr,'Volume_Divergente'),1)}</div><small>entradas + saídas apuradas</small></div>`;
+  groupedBarChart('chartShortExcess',branches.map(x=>({label:shortBranch(x.name),a:sum(x.rows,'Itens_Falta'),b:sum(x.rows,'Itens_Sobra')})),{aLabel:'Faltas',bLabel:'Sobras',aColor:'#ff4d3f',bColor:'#20c776'});
+  barChart('chartDivByBranch',branches.sort((a,b)=>b.o.divergence-a.o.divergence).map(x=>({label:shortBranch(x.name),value:x.o.divergence})),{suffix:'%',horizontal:true,color:'#ff9d16'});
+  const rows=arr.filter(r=>Number(r.Itens_Divergentes)>0).sort((a,b)=>Number(b.Percentual_Divergencia)-Number(a.Percentual_Divergencia));
+  $('#auditTableCount').textContent=`${rows.length} registros`;
+  $('#auditTable').innerHTML=rows.map(r=>{const risk=riskOf(Number(r.Percentual_Divergencia));return `<tr><td>${esc(r.ID_Auditoria)}</td><td>${esc(r.Data_Auditoria)}</td><td>${esc(shortBranch(r.Filial))}</td><td>${esc(r.Auditor)}</td><td>${fmtN(r.Itens_Auditados)}</td><td style="color:#ff8378;font-weight:800">${fmtN(r.Itens_Falta)}</td><td style="color:#61e7a0;font-weight:800">${fmtN(r.Itens_Sobra)}</td><td>${fmtPct(r.Percentual_Divergencia)}</td><td>${fmtBRL(r.Impacto_Bruto)}</td><td><span class="chip ${risk==='Crítico'?'red':risk==='Alto'?'orange':risk==='Conforme'?'green':'blue'}">${risk}</span></td></tr>`}).join('') || '<tr><td colspan="10" class="empty">Nenhuma auditoria divergente nos filtros selecionados.</td></tr>';
+}
+
+function renderFinancial(arr){
+  const o=overall(arr), branches=aggregate(arr,'Filial');
+  $('#financeCards').innerHTML=`
+    <div class="callout"><div class="t">Capital Auditado</div><div class="n">${fmtBRL(o.capital)}</div><small>valor total do estoque</small></div>
+    <div class="callout"><div class="t">Impacto Bruto</div><div class="n" style="color:#ff8378">${fmtBRL(o.impact)}</div><small>${o.capital?fmtN(o.impact/o.capital*100,3):'0,000'}% do capital</small></div>
+    <div class="callout"><div class="t">Valor Faltas</div><div class="n">${fmtBRL(o.shortage)}</div><small>perda potencial</small></div>
+    <div class="callout"><div class="t">Saldo Líquido</div><div class="n">${fmtBRL(o.balance)}</div><small>sobra menos falta</small></div>`;
+  groupedBarChart('chartValueShortExcess',branches.map(x=>({label:shortBranch(x.name),a:sum(x.rows,'Valor_Falta'),b:sum(x.rows,'Valor_Sobra')})),{aLabel:'Valor Falta',bLabel:'Valor Sobra',aColor:'#ff4d3f',bColor:'#20c776',money:true});
+  const ordered=arr.slice().sort((a,b)=>parseDateTime(a.Data_Hora_Registro)-parseDateTime(b.Data_Hora_Registro));
+  lineChart('chartImpactTrend',ordered.map(r=>({label:shortDate(r.Data_Hora_Registro||r.Data_Auditoria),value:Number(r.Impacto_Bruto)})),{prefix:'R$ ',color:'#16b8ff',money:true,min:0});
+  scatterChart('chartRisk',arr.map(r=>({x:Number(r.Percentual_Divergencia),y:Number(r.Impacto_Bruto),label:shortBranch(r.Filial)})),{xSuffix:'%',yPrefix:'R$ '});
+  const pareCounts={};arr.forEach(r=>{const k=(String(r.Parecer||'Sem parecer').match(/POSITIVO|NEGATIVO|ATENÇÃO|CRÍTICO/i)||['Sem parecer'])[0].toUpperCase();pareCounts[k]=(pareCounts[k]||0)+1});
+  const colors=['#ff4d3f','#20c776','#f7d51d','#16b8ff'];
+  donutChart('chartParecer',Object.entries(pareCounts).map(([label,value],i)=>({label,value,color:colors[i%colors.length]})));
+  const largest=branches.sort((a,b)=>b.o.impact-a.o.impact)[0];
+  $('#financialInsight').innerHTML=arr.length?`<b>Leitura financeira:</b> o impacto bruto consolidado é de ${fmtBRL(o.impact)}, equivalente a ${o.capital?fmtN(o.impact/o.capital*100,3):'0,000'}% do capital auditado. ${largest?`A maior exposição está em <b>${esc(shortBranch(largest.name))}</b>, com ${fmtBRL(largest.o.impact)}.`:''}`:'Sem dados para análise financeira.';
+}
+
+function renderGroups(arr){
+  const groups=aggregate(arr,'Grupo').sort((a,b)=>b.o.impact-a.o.impact);
+  barChart('chartGroupImpact',groups.map(x=>({label:`Grupo ${x.name}`,value:x.o.impact})),{prefix:'R$ ',money:true,color:'#16b8ff',horizontal:groups.length>5});
+  barChart('chartGroupDiv',groups.slice().sort((a,b)=>b.o.divergence-a.o.divergence).map(x=>({label:`Grupo ${x.name}`,value:x.o.divergence})),{suffix:'%',color:'#ff9d16',horizontal:groups.length>5});
+  const auditors=aggregate(arr,'Auditor').sort((a,b)=>b.o.assert-a.o.assert);
+  barChart('chartAuditor',auditors.map(x=>({label:x.name,value:x.o.assert})),{suffix:'%',color:'#20c776',horizontal:auditors.length>5,min:0,max:100});
+  scatterChart('chartMovement',arr.map(r=>({x:Number(r.Movimentacao_Total),y:Number(r.Percentual_Divergencia),label:shortBranch(r.Filial)})),{xLabel:'Movimentação',ySuffix:'%'});
+  $('#groupTable').innerHTML=groups.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.rows.length}</td><td>${fmtN(x.o.audited)}</td><td>${fmtPct(x.o.assert)}</td><td>${fmtPct(x.o.divergence)}</td><td>${fmtBRL(x.o.capital)}</td><td>${fmtBRL(x.o.impact)}</td><td><span class="chip ${x.o.risk==='Crítico'?'red':x.o.risk==='Alto'?'orange':x.o.risk==='Conforme'?'green':'blue'}">${x.o.risk}</span></td></tr>`).join('') || '<tr><td colspan="8" class="empty">Sem grupos para os filtros selecionados.</td></tr>';
+}
+
+function actionIsOverdue(a){
+  if(a.status==='Concluído'||!a.prazo)return false;
+  const d=new Date(a.prazo+'T23:59:59');return d < new Date();
+}
+function fmtDateBR(v){if(!v)return '—';const p=String(v).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:v}
+function saveActionsLocal(){localStorage.setItem('gtf_audit_actions',JSON.stringify(ACTIONS));renderActionStats()}
+function logActivity(msg){ACTIVITY.unshift({msg,at:new Date().toISOString()});ACTIVITY=ACTIVITY.slice(0,12);localStorage.setItem('gtf_audit_activity',JSON.stringify(ACTIVITY));renderActivity()}
+function renderActivity(){
+  const el=$('#activityList');if(!el)return;
+  el.innerHTML=ACTIVITY.length?ACTIVITY.slice(0,6).map(x=>`<div class="activity-item">${esc(x.msg)}<time>${new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'short'}).format(new Date(x.at))}</time></div>`).join(''):'<div class="empty">As alterações do plano aparecerão aqui.</div>';
+}
+function renderActionStats(){
+  const pending=ACTIONS.filter(a=>a.status==='Pendente').length, progress=ACTIONS.filter(a=>a.status==='Em Andamento').length, done=ACTIONS.filter(a=>a.status==='Concluído').length, overdue=ACTIONS.filter(actionIsOverdue).length;
+  const el=$('#actionKpis');if(el)el.innerHTML=`<div class="decision-kpi warn"><small>Pendentes</small><strong>${pending}</strong></div><div class="decision-kpi orange"><small>Em andamento</small><strong>${progress}</strong></div><div class="decision-kpi red"><small>Vencidas</small><strong>${overdue}</strong></div><div class="decision-kpi green"><small>Concluídas</small><strong>${done}</strong></div>`;
+  const s=$('#actionSummary');if(s)s.textContent=`${ACTIONS.length} ações • ${overdue} vencida(s)`;
+}
+function renderActions(){
+  const el=$('#actionTable');if(!el)return;
+  el.innerHTML=ACTIONS.map((a,i)=>{const overdue=actionIsOverdue(a);return `<tr class="${overdue?'action-row-overdue':''}">
+    <td><b>${esc(a.indicador)}</b></td>
+    <td>${esc(a.problema)}</td>
+    <td>${esc(a.acao)}</td>
+    <td>${esc(a.responsavel)}</td>
+    <td><span class="${overdue?'status-badge overdue':''}">${fmtDateBR(a.prazo)}${overdue?' • vencida':''}</span></td>
+    <td><select class="action-select" data-i="${i}" data-k="status"><option ${a.status==='Pendente'?'selected':''}>Pendente</option><option ${a.status==='Em Andamento'?'selected':''}>Em Andamento</option><option ${a.status==='Concluído'?'selected':''}>Concluído</option></select></td>
+    <td>${esc(a.observacoes||'—')}</td>
+    <td style="white-space:nowrap"><button class="small-btn" onclick="editAction(${i})">Editar</button> <button class="small-btn" onclick="removeAction(${i})">Excluir</button></td>
+  </tr>`}).join('') || '<tr><td colspan="8" class="empty">Nenhuma ação registrada.</td></tr>';
+  $$('.action-select').forEach(sel=>sel.addEventListener('change',e=>{const i=+e.target.dataset.i;ACTIONS[i].status=e.target.value;saveActionsLocal();logActivity(`${ACTIONS[i].indicador}: status alterado para ${e.target.value}`);scheduleCloudStateSave();renderActions()}));
+  renderActionStats();renderActivity();
+}
+function openActionModal(i=null){
+  EDIT_ACTION_INDEX=i;const a=i===null?{indicador:'',problema:'',acao:'',responsavel:'',prazo:'',status:'Pendente',observacoes:''}:ACTIONS[i];
+  $('#actionModalTitle').textContent=i===null?'Nova Ação':'Editar Ação';
+  $('#mIndicador').value=a.indicador||'';$('#mProblema').value=a.problema||'';$('#mAcao').value=a.acao||'';$('#mResponsavel').value=a.responsavel||'';$('#mPrazo').value=/^\d{4}-\d{2}-\d{2}$/.test(a.prazo||'')?a.prazo:'';$('#mStatus').value=a.status||'Pendente';$('#mObservacoes').value=a.observacoes||'';
+  $('#actionModal').classList.add('open');$('#actionModal').setAttribute('aria-hidden','false');
+}
+function closeActionModal(){$('#actionModal').classList.remove('open');$('#actionModal').setAttribute('aria-hidden','true')}
+window.editAction=i=>openActionModal(i);
+window.removeAction=i=>{const a=ACTIONS[i];if(!confirm(`Excluir a ação de ${a.indicador}?`))return;ACTIONS.splice(i,1);saveActionsLocal();logActivity(`${a.indicador}: ação excluída`);scheduleCloudStateSave();renderActions()};
+function exportActionsCSV(){
+  const cols=['id','indicador','problema','acao','responsavel','prazo','status','observacoes'];
+  const csv='\uFEFF'+[cols.join(';'),...ACTIONS.map(a=>cols.map(k=>'"'+String(a[k]??'').replace(/"/g,'""')+'"').join(';'))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download='plano_de_acao_gtf.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);logActivity('Plano de ação exportado para CSV');
+}
+
+function renderAll(){
+  const arr=currentData();
+  $('#baseBadge').textContent=`Base: ${DATA.length} auditoria${DATA.length===1?'':'s'}`;
+  $('#footerNote').textContent=`GTF Auditoria 360 • ${arr.length} registro(s) exibido(s) • Fonte: ${sourceLabel()} • Última atualização: ${SOURCE.lastUpdated||'não registrada'}`;
+  renderSummary(arr);renderQuality(arr);renderDivergences(arr);renderFinancial(arr);renderGroups(arr);renderActions();
+}
+
+function svgWrap(content,h=270){return `<svg viewBox="0 0 800 ${h}" role="img" aria-label="gráfico">${content}</svg>`}
+function emptyChart(id){$('#'+id).innerHTML='<div class="empty">Sem dados para este gráfico.</div>'}
+function axisText(x,y,t,anchor='start',fill='#8ea7c6',size=11){return `<text x="${x}" y="${y}" text-anchor="${anchor}" fill="${fill}" font-size="${size}" font-family="Segoe UI,Arial">${esc(t)}</text>`}
+
+function barChart(id,data,opt={}){
+  if(!data.length){emptyChart(id);return}
+  const horizontal=opt.horizontal||data.length>5, W=800,H=280,m={l:horizontal?220:60,r:35,t:18,b:horizontal?30:78};
+  const vals=data.map(d=>Number(d.value)||0), max=opt.max??Math.max(...vals,1), min=opt.min??0;
+  let s='';
+  for(let i=0;i<=4;i++){const y=m.t+(H-m.t-m.b)*i/4;s+=`<line x1="${m.l}" y1="${y}" x2="${W-m.r}" y2="${y}" stroke="rgba(255,255,255,.08)"/>`}
+  if(horizontal){
+    const bh=(H-m.t-m.b)/data.length*0.58;
+    data.forEach((d,i)=>{const y=m.t+(H-m.t-m.b)*(i+.5)/data.length;const w=(W-m.l-m.r)*((d.value-min)/(max-min||1));s+=axisText(m.l-10,y+4,d.label,'end','#b8c8dc',11);s+=`<rect x="${m.l}" y="${y-bh/2}" width="${Math.max(0,w)}" height="${bh}" rx="5" fill="${opt.color||'#16b8ff'}"><title>${esc(d.label)}: ${formatChartVal(d.value,opt)}</title></rect>`;s+=axisText(m.l+w+7,y+4,formatChartVal(d.value,opt),'start','#eaf3ff',11)});
+  }else{
+    const plotW=W-m.l-m.r, bw=plotW/data.length*.58;
+    data.forEach((d,i)=>{const x=m.l+plotW*(i+.5)/data.length;const h=(H-m.t-m.b)*((d.value-min)/(max-min||1));const y=H-m.b-h;s+=`<rect x="${x-bw/2}" y="${y}" width="${bw}" height="${h}" rx="5" fill="${opt.color||'#16b8ff'}"><title>${esc(d.label)}: ${formatChartVal(d.value,opt)}</title></rect>`;s+=axisText(x,H-m.b+18,truncate(d.label,18),'middle','#9db0c8',10);s+=axisText(x,y-7,formatChartVal(d.value,opt),'middle','#eaf3ff',10)});
+  }
+  $('#'+id).innerHTML=svgWrap(s,H);
+}
+function groupedBarChart(id,data,opt={}){
+  if(!data.length){emptyChart(id);return}
+  const W=800,H=280,m={l:55,r:30,t:22,b:80},plotW=W-m.l-m.r,plotH=H-m.t-m.b,max=Math.max(...data.flatMap(d=>[Number(d.a)||0,Number(d.b)||0]),1);let s='';
+  for(let i=0;i<=4;i++){const y=m.t+plotH*i/4;s+=`<line x1="${m.l}" y1="${y}" x2="${W-m.r}" y2="${y}" stroke="rgba(255,255,255,.08)"/>`}
+  const groupW=plotW/data.length*.7,bw=groupW*.38;
+  data.forEach((d,i)=>{const x=m.l+plotW*(i+.5)/data.length;[['a',opt.aColor||'#ff4d3f',-bw*.55],['b',opt.bColor||'#20c776',bw*.55]].forEach(([k,c,dx])=>{const v=Number(d[k])||0,h=plotH*v/max,y=H-m.b-h;s+=`<rect x="${x+dx-bw/2}" y="${y}" width="${bw}" height="${h}" rx="4" fill="${c}"><title>${esc(d.label)} • ${k==='a'?opt.aLabel:opt.bLabel}: ${opt.money?fmtBRL(v):fmtN(v,1)}</title></rect>`});s+=axisText(x,H-m.b+18,truncate(d.label,18),'middle','#9db0c8',10)});
+  s+=`<circle cx="${m.l+8}" cy="${H-22}" r="5" fill="${opt.aColor||'#ff4d3f'}"/>${axisText(m.l+20,H-18,opt.aLabel||'A','start','#b8c8dc',10)}<circle cx="${m.l+140}" cy="${H-22}" r="5" fill="${opt.bColor||'#20c776'}"/>${axisText(m.l+152,H-18,opt.bLabel||'B','start','#b8c8dc',10)}`;
+  $('#'+id).innerHTML=svgWrap(s,H);
+}
+function lineChart(id,data,opt={}){
+  if(!data.length){emptyChart(id);return}
+  const W=800,H=280,m={l:55,r:28,t:20,b:65},plotW=W-m.l-m.r,plotH=H-m.t-m.b,vals=data.map(d=>Number(d.value)||0);let min=opt.min??Math.min(...vals),max=opt.max??Math.max(...vals);if(min===max){min=Math.max(0,min-1);max+=1}let s='';
+  for(let i=0;i<=4;i++){const y=m.t+plotH*i/4;s+=`<line x1="${m.l}" y1="${y}" x2="${W-m.r}" y2="${y}" stroke="rgba(255,255,255,.08)"/>`;s+=axisText(m.l-8,y+4,formatChartVal(max-(max-min)*i/4,opt),'end','#7f9abb',10)}
+  const pts=data.map((d,i)=>{const x=m.l+(data.length===1?plotW/2:plotW*i/(data.length-1));const y=m.t+plotH*(1-(d.value-min)/(max-min||1));return{x,y,d}});
+  if(pts.length>1)s+=`<polyline points="${pts.map(p=>`${p.x},${p.y}`).join(' ')}" fill="none" stroke="${opt.color||'#16b8ff'}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.forEach(p=>{s+=`<circle cx="${p.x}" cy="${p.y}" r="5" fill="${opt.color||'#16b8ff'}" stroke="#06162f" stroke-width="2"><title>${esc(p.d.label)}: ${formatChartVal(p.d.value,opt)}</title></circle>`;s+=axisText(p.x,H-m.b+18,truncate(p.d.label,16),'middle','#9db0c8',10)});
+  $('#'+id).innerHTML=svgWrap(s,H);
+}
+function donutChart(id,data){
+  const total=data.reduce((a,d)=>a+Number(d.value||0),0);if(!total){emptyChart(id);return}
+  const W=800,H=230,cx=240,cy=110,r=76,sw=26,C=2*Math.PI*r;let acc=0,s='';
+  data.forEach(d=>{const frac=d.value/total,dash=frac*C,offset=-acc*C;s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}" stroke-width="${sw}" stroke-dasharray="${dash} ${C-dash}" stroke-dashoffset="${offset}" transform="rotate(-90 ${cx} ${cy})"><title>${esc(d.label)}: ${d.value}</title></circle>`;acc+=frac});
+  s+=axisText(cx,cy+6,total,'middle','#ffffff',27)+axisText(cx,cy+25,'auditorias','middle','#8ea7c6',10);
+  data.forEach((d,i)=>{const y=55+i*35;s+=`<circle cx="420" cy="${y}" r="6" fill="${d.color}"/>${axisText(438,y+4,`${d.label}: ${d.value}`,'start','#dbe8f8',12)}`});
+  $('#'+id).innerHTML=svgWrap(s,H);
+}
+function scatterChart(id,data,opt={}){
+  if(!data.length){emptyChart(id);return}
+  const W=800,H=280,m={l:70,r:35,t:22,b:62},plotW=W-m.l-m.r,plotH=H-m.t-m.b;let xs=data.map(d=>d.x),ys=data.map(d=>d.y),xmin=Math.min(...xs,0),xmax=Math.max(...xs,1),ymin=Math.min(...ys,0),ymax=Math.max(...ys,1);if(xmin===xmax)xmax=xmin+1;if(ymin===ymax)ymax=ymin+1;let s='';
+  for(let i=0;i<=4;i++){const y=m.t+plotH*i/4;s+=`<line x1="${m.l}" y1="${y}" x2="${W-m.r}" y2="${y}" stroke="rgba(255,255,255,.08)"/>`}
+  data.forEach((d,i)=>{const x=m.l+plotW*(d.x-xmin)/(xmax-xmin),y=m.t+plotH*(1-(d.y-ymin)/(ymax-ymin));const c=['#16b8ff','#b8ee21','#ff9d16','#ff4d3f'][i%4];s+=`<circle cx="${x}" cy="${y}" r="7" fill="${c}" opacity=".9"><title>${esc(d.label)} • X: ${formatNumPrefix(d.x,opt.xPrefix,opt.xSuffix)} • Y: ${formatNumPrefix(d.y,opt.yPrefix,opt.ySuffix)}</title></circle>`;s+=axisText(x+9,y-8,truncate(d.label,16),'start','#dbe8f8',9)});
+  s+=axisText(W/2,H-15,opt.xLabel||'Divergência / Movimentação','middle','#91a9c7',10);
+  $('#'+id).innerHTML=svgWrap(s,H);
+}
+function formatChartVal(v,opt){if(opt.money)return fmtBRL(v);return `${opt.prefix||''}${fmtN(v,Math.abs(v)<10&&v%1?2:1)}${opt.suffix||''}`}
+function formatNumPrefix(v,p='',s=''){return `${p||''}${fmtN(v,2)}${s||''}`}
+function truncate(s,n){s=String(s);return s.length>n?s.slice(0,n-1)+'…':s}
+function parseDateTime(s){if(!s)return 0;const [d,t='00:00']=String(s).split(' '),[dd,mm,yy]=d.split('/').map(Number),[hh,mi]=t.split(':').map(Number);return new Date(yy,mm-1,dd,hh||0,mi||0).getTime()}
+function shortDate(s){const [d,t='']=String(s||'').split(' ');return t?`${d.slice(0,5)} ${t}`:d}
+
+function normalizeHeader(h){return String(h||'').trim().replace(/[\s-]+/g,'_').replace(/%/g,'Percentual').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]/g,'')}
+function parseBRNum(v){
+  if(typeof v==='number' && Number.isFinite(v))return v;
+  let s=String(v??'').trim();if(!s)return 0;
+  const negParen=/^\s*\(.*\)\s*$/.test(s);
+  s=s.replace(/\u00a0/g,' ').replace(/%/g,'').replace(/[^\d,.\-]/g,'').trim();
+  if(!s||s==='-'||s===','||s==='.')return 0;
+  const c=s.lastIndexOf(','),d=s.lastIndexOf('.');
+  if(c>=0&&d>=0){if(c>d)s=s.replace(/\./g,'').replace(',','.');else s=s.replace(/,/g,'')}
+  else if(c>=0)s=s.replace(/\./g,'').replace(',','.');
+  let n=Number(s);if(!Number.isFinite(n))n=0;return negParen?-Math.abs(n):n;
+}
+function coerceRecord(raw){
+  const aliases={
+    ID_Auditoria:['ID_Auditoria','IDAuditoria'],Data_Auditoria:['Data_Auditoria','DataAuditoria'],Mes_Referencia:['Mes_Referencia','MesReferencia'],Auditor:['Auditor'],Filial:['Filial'],Armazem:['Armazem','Armazem'],Grupo:['Grupo'],Parecer:['Parecer'],Data_Hora_Registro:['Data_Hora_Registro','DataHoraRegistro'],Usuario_Registro:['Usuario_Registro','UsuarioRegistro'],Observacoes:['Observacoes'],
+    Itens_Auditados:['Itens_Auditados','ItensAuditados'],Itens_Sobra:['Itens_Sobra','ItensSobra'],Itens_Falta:['Itens_Falta','ItensFalta'],Itens_OK:['Itens_OK','ItensOK'],Itens_Divergentes:['Itens_Divergentes','ItensDivergentes'],Itens_Avaria:['Itens_Avaria','ItensAvaria'],Volume_Auditado:['Volume_Auditado','VolumeAuditado'],Volume_Sobra:['Volume_Sobra','VolumeSobra'],Volume_Falta:['Volume_Falta','VolumeFalta'],Volume_Divergente:['Volume_Divergente','VolumeDivergente'],Volume_Avarias:['Volume_Avarias','VolumeAvarias'],Valor_Estoque:['Valor_Estoque','ValorEstoque'],Valor_Sobra:['Valor_Sobra','ValorSobra'],Valor_Falta:['Valor_Falta','ValorFalta'],Saldo_Liquido:['Saldo_Liquido','SaldoLiquido'],Valor_Avarias:['Valor_Avarias','ValorAvarias'],Impacto_Bruto:['Impacto_Bruto','ImpactoBruto'],Acuracidade:['Acuracidade'],Assertividade:['Assertividade'],Percentual_Divergencia:['Percentual_Divergencia','PercentualDivergencia'],Percentual_Avarias_Volume:['Percentual_Avarias_Volume','PercentualAvariasVolume'],Percentual_Avarias_Valor:['Percentual_Avarias_Valor','PercentualAvariasValor'],Entradas:['Entradas'],Saidas:['Saidas'],Movimentacao_Total:['Movimentacao_Total','MovimentacaoTotal']
+  };
+  const out={};Object.entries(aliases).forEach(([k,ks])=>{for(const a of ks){if(raw[a]!==undefined){out[k]=raw[a];break}}});
+  const nums=['Itens_Auditados','Itens_Sobra','Itens_Falta','Itens_OK','Itens_Divergentes','Itens_Avaria','Volume_Auditado','Volume_Sobra','Volume_Falta','Volume_Divergente','Volume_Avarias','Valor_Estoque','Valor_Sobra','Valor_Falta','Saldo_Liquido','Valor_Avarias','Impacto_Bruto','Acuracidade','Assertividade','Percentual_Divergencia','Percentual_Avarias_Volume','Percentual_Avarias_Valor','Entradas','Saidas','Movimentacao_Total'];nums.forEach(k=>out[k]=parseBRNum(out[k]));
+  return out;
+}
+
+function cleanRows(raw){
+  if(!Array.isArray(raw)) throw new Error('A fonte precisa conter uma lista/tabela de registros.');
+  const rows=raw.map(r=>coerceRecord(Object.fromEntries(Object.entries(r||{}).map(([k,v])=>[normalizeHeader(k),v])))).filter(r=>r.ID_Auditoria||r.Filial);
+  if(!rows.length) throw new Error('Não foi possível reconhecer as colunas da auditoria. Verifique o cabeçalho da base.');
+  return rows;
+}
+function setData(rows,{cache=true}={}){
+  DATA=rows;
+  if(cache)localStorage.setItem('gtf_audit_cached_data',JSON.stringify(DATA));
+  initFilters();renderAll();updateSourceUI();
+}
+function sourceLabel(){
+  if(SOURCE.type==='graph') return SOURCE.fileName ? `OneDrive direto • ${SOURCE.fileName}` : 'Microsoft OneDrive direto';
+  if(SOURCE.type==='local') return SOURCE.fileName ? `Excel local • ${SOURCE.fileName}` : 'Excel local';
+  return 'Demonstração';
+}
+function nowBR(){return new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'medium'}).format(new Date())}
+let toastTimer;
+function toast(msg,type='good'){const el=$('#toast');clearTimeout(toastTimer);el.className=`toast show ${type}`;el.textContent=msg;toastTimer=setTimeout(()=>el.className='toast',5200)}
+function setConnectionStatus(text,state=''){$('#sourceStatusText').textContent=text;$('#sourceDot').className=`source-dot ${state}`}
+function currentRedirectUri(){if(location.protocol==='file:')return 'HTTPS ou http://localhost necessário';return new URL('.',location.href).href}
+function currentMsAccount(){if(!MSAL_APP)return null;return MSAL_APP.getActiveAccount?.()||MSAL_APP.getAllAccounts?.()[0]||null}
+function updateMsAccountUI(){
+  const a=currentMsAccount();
+  if($('#msAccountName'))$('#msAccountName').textContent=a?(a.name||'Conta Microsoft'):'Microsoft não conectado';
+  if($('#msAccountUser'))$('#msAccountUser').textContent=a?(a.username||'Conta autenticada'):'Entre com a conta que possui acesso à planilha.';
+  if($('#msAvatar'))$('#msAvatar').textContent=a?String(a.name||a.username||'M').trim().charAt(0).toUpperCase():'M';
+  if($('#msHeaderBtn')){$('#msHeaderBtn').textContent=a?'● Microsoft conectado':'◉ Entrar Microsoft';$('#msHeaderBtn').classList.toggle('auth-good',!!a)}
+}
+function updateSourceUI(){
+  $('#sourceBadge').textContent=`Fonte: ${sourceLabel()}`;$('#sourceBadge').title=SOURCE.lastUpdated?`Última atualização: ${SOURCE.lastUpdated}`:'Fonte de dados atual';
+  if($('#oneDriveUrl'))$('#oneDriveUrl').value=SOURCE.oneDriveUrl||'';
+  if($('#msClientId'))$('#msClientId').value=SOURCE.clientId||'';
+  if($('#msTenant'))$('#msTenant').value=SOURCE.tenant||'common';
+  if($('#excelSheetName'))$('#excelSheetName').value=SOURCE.excelSheetName||'AUDITORIAS SALVAS';
+  if($('#excelHeaderRow'))$('#excelHeaderRow').value=SOURCE.excelHeaderRow||4;
+  if($('#cloudStateFile'))$('#cloudStateFile').value=SOURCE.stateFileName||'GTF_Auditoria_360_estado.json';
+  if($('#localSheetName'))$('#localSheetName').value=SOURCE.excelSheetName||'AUDITORIAS SALVAS';
+  if($('#localHeaderRow'))$('#localHeaderRow').value=SOURCE.excelHeaderRow||4;
+  if($('#localFileName'))$('#localFileName').value=SOURCE.fileName||'';
+  if($('#refreshOnOpen'))$('#refreshOnOpen').value=SOURCE.refreshOnOpen||'yes';
+  if($('#redirectUriDisplay'))$('#redirectUriDisplay').value=currentRedirectUri();
+  $('#sourceType').value=SOURCE.type==='local'?'local':'graph';toggleSourceFields();updateMsAccountUI();
+  setConnectionStatus(SOURCE.type==='demo'?'Usando demonstração':SOURCE.lastUpdated?`Atualizado em ${SOURCE.lastUpdated}`:'Fonte configurada',SOURCE.type==='demo'?'':SOURCE.lastUpdated?'good':'');
+}
+function toggleSourceFields(){const t=$('#sourceType').value;$('#graphFields').classList.toggle('source-hidden',t!=='graph');$('#localFields').classList.toggle('source-hidden',t!=='local');$('#sourceHelp').innerHTML=t==='graph'?'<b>OneDrive direto:</b> autenticação Microsoft Graph. O mesmo endereço serve como dashboard no computador e PWA no celular.':'<b>Contingência:</b> usa o arquivo .xlsm sincronizado no computador quando a conexão Microsoft não estiver configurada.'}
+function openSourceModal(){updateSourceUI();$('#sourceModal').classList.add('open');$('#sourceModal').setAttribute('aria-hidden','false')}
+function closeSourceModal(){$('#sourceModal').classList.remove('open');$('#sourceModal').setAttribute('aria-hidden','true')}
+
+function persistSource(){localStorage.setItem('gtf_audit_source_v4',JSON.stringify(SOURCE))}
+function buildMsal(){
+  if(!SOURCE.clientId)throw new Error('Informe o Application (Client) ID do Microsoft Entra.');
+  if(location.protocol==='file:')throw new Error('Abra o projeto pelo arquivo INICIAR-GTF.bat. O login Microsoft precisa rodar em http://localhost:3000/.');
+  if(typeof msal==='undefined')throw new Error('Biblioteca de autenticação Microsoft não carregou.');
+  if(!MSAL_APP){MSAL_APP=new msal.PublicClientApplication({auth:{clientId:SOURCE.clientId,authority:`https://login.microsoftonline.com/${SOURCE.tenant||'common'}`,redirectUri:currentRedirectUri(),navigateToLoginRequestUrl:false},cache:{cacheLocation:'localStorage',storeAuthStateInCookie:false}});const a=MSAL_APP.getAllAccounts()[0];if(a&&MSAL_APP.setActiveAccount)MSAL_APP.setActiveAccount(a)}
+  return MSAL_APP;
+}
+async function loginMicrosoft(){
+  const app=buildMsal();
+  setConnectionStatus('Abrindo autenticação Microsoft…','');
+  await app.loginRedirect({scopes:['User.Read','Files.ReadWrite'],prompt:'select_account',redirectUri:currentRedirectUri()});
+}
+async function logoutMicrosoft(){const app=buildMsal();const a=currentMsAccount();if(a)await app.logoutPopup({account:a,postLogoutRedirectUri:currentRedirectUri()});MSAL_APP=null;updateMsAccountUI();toast('Sessão Microsoft encerrada.','good')}
+async function graphToken(interactive=true){
+  const app=buildMsal();let account=currentMsAccount();
+  if(!account){
+    if(!interactive)throw new Error('Sessão Microsoft necessária.');
+    await loginMicrosoft();
+    throw new Error('Redirecionando para autenticação Microsoft…');
+  }
+  const req={scopes:['User.Read','Files.ReadWrite'],account,redirectUri:currentRedirectUri()};
+  try{return (await app.acquireTokenSilent(req)).accessToken}catch(e){
+    if(!interactive)throw e;
+    await app.acquireTokenRedirect(req);
+    throw new Error('Redirecionando para renovar a autorização Microsoft…');
+  }
+}
+async function graphRequest(path,{method='GET',body=null,headers={},interactive=true,allow404=false}={}){
+  const token=await graphToken(interactive);const h={Authorization:`Bearer ${token}`,...headers};const res=await fetch(`https://graph.microsoft.com/v1.0${path}`,{method,headers:h,body,cache:'no-store'});
+  if(allow404&&res.status===404)return res;if(!res.ok){let detail='';try{detail=(await res.json())?.error?.message||''}catch{}throw new Error(`Microsoft Graph HTTP ${res.status}${detail?': '+detail:''}`)}return res;
+}
+function encodeSharingUrl(url){const bytes=new TextEncoder().encode(String(url));let bin='';bytes.forEach(b=>bin+=String.fromCharCode(b));return 'u!'+btoa(bin).replace(/=+$/,'').replace(/\+/g,'-').replace(/\//g,'_')}
+async function ensureGraphItem(interactive=true){
+  if(GRAPH_ITEM)return GRAPH_ITEM;if(!SOURCE.oneDriveUrl)throw new Error('Informe o link do Excel no OneDrive.');
+  const sid=encodeSharingUrl(SOURCE.oneDriveUrl);const res=await graphRequest(`/shares/${sid}/driveItem?$select=id,name,webUrl,eTag,lastModifiedDateTime,parentReference`,{interactive});GRAPH_ITEM=await res.json();SOURCE.fileName=GRAPH_ITEM.name||SOURCE.fileName;persistSource();return GRAPH_ITEM;
+}
+async function rowsFromArrayBuffer(buf,name='Planilha Auditor.xlsm'){
+  if(typeof XLSX==='undefined')throw new Error('Módulo Excel não carregou.');const wb=XLSX.read(buf,{type:'array',cellDates:false});
+  const wanted=String(SOURCE.excelSheetName||'AUDITORIAS SALVAS').trim();const auto=wb.SheetNames.find(n=>normalizeHeader(n)==='AUDITORIAS_SALVAS');const sheetName=(wanted&&wb.SheetNames.includes(wanted)?wanted:auto)||wb.SheetNames[0];if(!sheetName)throw new Error('O Excel não possui planilhas legíveis.');SOURCE.excelSheetName=sheetName;
+  const headerRow=Math.max(1,parseInt(SOURCE.excelHeaderRow||4,10)||4);const raw=XLSX.utils.sheet_to_json(wb.Sheets[sheetName],{defval:'',raw:false,range:headerRow-1});return cleanRows(raw);
+}
+async function fetchGraphWorkbookRows(interactive=true){
+  const item=await ensureGraphItem(interactive);const sid=encodeSharingUrl(SOURCE.oneDriveUrl);const res=await graphRequest(`/shares/${sid}/driveItem/content`,{interactive});const buf=await res.arrayBuffer();return await rowsFromArrayBuffer(buf,item.name||'Planilha Auditor.xlsm');
+}
+function cloudStatePath(){if(!GRAPH_ITEM?.parentReference?.driveId||!GRAPH_ITEM?.parentReference?.id)return null;const d=encodeURIComponent(GRAPH_ITEM.parentReference.driveId),p=encodeURIComponent(GRAPH_ITEM.parentReference.id),f=encodeURIComponent(SOURCE.stateFileName||'GTF_Auditoria_360_estado.json');return `/drives/${d}/items/${p}:/${f}:/content`}
+async function loadCloudState(interactive=false){
+  if(SOURCE.type!=='graph')return;await ensureGraphItem(interactive);const path=cloudStatePath();if(!path)return;const res=await graphRequest(path,{interactive,allow404:true});if(res.status===404){toast('Plano de Ação na nuvem será criado no primeiro salvamento.','warn');return}
+  const state=await res.json();if(Array.isArray(state.actions)){ACTIONS=state.actions;localStorage.setItem('gtf_audit_actions',JSON.stringify(ACTIONS))}if(Array.isArray(state.activity)){ACTIVITY=state.activity;localStorage.setItem('gtf_audit_activity',JSON.stringify(ACTIVITY))}
+  if(typeof state.meetingNotes==='string'){const m=$('#meetingNotes');m.value=state.meetingNotes;localStorage.setItem('gtf_audit_meeting_notes',state.meetingNotes)}CLOUD_STATE=state||CLOUD_STATE;renderActions();renderActivity();
+}
+async function saveCloudState(interactive=false){
+  if(SOURCE.type!=='graph')return;await ensureGraphItem(interactive);const path=cloudStatePath();if(!path)throw new Error('Não foi possível identificar a pasta do Excel no OneDrive.');const a=currentMsAccount();const state={schemaVersion:1,updatedAt:new Date().toISOString(),updatedBy:a?.username||'',actions:ACTIONS,meetingNotes:$('#meetingNotes')?.value||'',activity:ACTIVITY.slice(-200)};
+  await graphRequest(path,{method:'PUT',interactive,headers:{'Content-Type':'application/json; charset=utf-8'},body:JSON.stringify(state,null,2)});CLOUD_STATE=state;toast('Plano de Ação sincronizado com o OneDrive.','good');
+}
+function scheduleCloudStateSave(){if(SOURCE.type!=='graph')return;clearTimeout(CLOUD_SAVE_TIMER);CLOUD_SAVE_TIMER=setTimeout(()=>saveCloudState(false).catch(e=>console.warn('Sincronização do plano pendente:',e)),1200)}
+
+function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open('gtf_audit_dashboard',1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('handles'))req.result.createObjectStore('handles')};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function saveFileHandle(handle){try{const db=await openDB();await new Promise((resolve,reject)=>{const tx=db.transaction('handles','readwrite');tx.objectStore('handles').put(handle,'auditFile');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}catch(e){}}
+async function loadFileHandle(){try{const db=await openDB();const h=await new Promise((resolve,reject)=>{const tx=db.transaction('handles','readonly');const r=tx.objectStore('handles').get('auditFile');r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error)});db.close();return h}catch(e){return null}}
+async function clearFileHandle(){try{const db=await openDB();await new Promise((resolve,reject)=>{const tx=db.transaction('handles','readwrite');tx.objectStore('handles').delete('auditFile');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close()}catch(e){}}
+async function ensureHandlePermission(handle,ask=true){if(!handle)return false;if(!handle.queryPermission)return true;let p=await handle.queryPermission({mode:'read'});if(p==='granted')return true;if(ask&&handle.requestPermission)p=await handle.requestPermission({mode:'read'});return p==='granted'}
+async function rowsFromFile(file){const name=(file.name||'').toLowerCase();if(name.endsWith('.json'))return cleanRows(JSON.parse(await file.text()));if(name.endsWith('.csv')||name.endsWith('.txt'))return cleanRows(parseCSV(await file.text()));if(/\.(xlsx|xls|xlsm|xlsb)$/.test(name))return rowsFromArrayBuffer(await file.arrayBuffer(),file.name);throw new Error('Formato não suportado.')}
+async function selectLocalFile(){if(window.showOpenFilePicker){try{const [handle]=await showOpenFilePicker({multiple:false,types:[{description:'Planilha Auditor',accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx','.xlsm'],'application/vnd.ms-excel':['.xls','.xlsb']}}]});CURRENT_LOCAL_FILE=handle;await saveFileHandle(handle);const f=await handle.getFile();SOURCE.fileName=f.name;$('#localFileName').value=f.name;return f}catch(e){if(e.name==='AbortError')return null;throw e}}$('#fileInput').click();return null}
+async function getRememberedLocalFile(askPermission=true){if(CURRENT_LOCAL_FILE&&await ensureHandlePermission(CURRENT_LOCAL_FILE,askPermission))return CURRENT_LOCAL_FILE.getFile();const h=await loadFileHandle();if(h&&await ensureHandlePermission(h,askPermission)){CURRENT_LOCAL_FILE=h;return h.getFile()}return null}
+
+async function refreshData({askPermission=true,fromModal=false}={}){
+  const btn=$('#refreshBtn');btn.classList.add('refreshing');btn.textContent='Atualizando...';setConnectionStatus('Sincronizando...','busy');
+  try{let rows;if(SOURCE.type==='graph'){rows=await fetchGraphWorkbookRows(askPermission);await loadCloudState(false).catch(console.warn)}else if(SOURCE.type==='local'){const f=await getRememberedLocalFile(askPermission);if(!f)throw new Error('Selecione o arquivo .xlsm sincronizado.');SOURCE.fileName=f.name;rows=await rowsFromFile(f)}else rows=JSON.parse(JSON.stringify(DEFAULT_DATA));SOURCE.lastUpdated=nowBR();persistSource();setData(rows);setConnectionStatus(`${rows.length} registro(s) • ${SOURCE.lastUpdated}`,'good');toast(`${rows.length} auditoria(s) sincronizada(s).`,'good');if(fromModal)closeSourceModal()}catch(e){console.error(e);setConnectionStatus('Falha na sincronização','bad');toast(`Não foi possível atualizar: ${e.message}`,'bad');throw e}finally{btn.classList.remove('refreshing');btn.textContent='⟳ Atualizar Dados'}
+}
+
+$('#fileInput').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{SOURCE.type='local';SOURCE.fileName=f.name;CURRENT_LOCAL_FILE=null;const rows=await rowsFromFile(f);SOURCE.lastUpdated=nowBR();persistSource();setData(rows);toast(`${rows.length} registro(s) carregado(s).`,'good')}catch(err){toast('Erro: '+err.message,'bad')}finally{e.target.value=''}});
+$('#refreshBtn').addEventListener('click',()=>refreshData({askPermission:true}).catch(()=>{}));
+$('#sourceBtn').addEventListener('click',openSourceModal);$('#sourceCloseBtn').addEventListener('click',closeSourceModal);$('#sourceCancelBtn').addEventListener('click',closeSourceModal);$('#sourceModal').addEventListener('click',e=>{if(e.target.id==='sourceModal')closeSourceModal()});$('#sourceType').addEventListener('change',toggleSourceFields);
+$('#openOneDriveBtn').addEventListener('click',()=>{const u=$('#oneDriveUrl').value.trim()||SOURCE.oneDriveUrl;if(u)window.open(u,'_blank','noopener,noreferrer')});
+$('#msLoginBtn').addEventListener('click',async()=>{try{readGraphConfigFromForm();await loginMicrosoft()}catch(e){toast(authErrorText(e),'bad')}});
+$('#msHeaderBtn').addEventListener('click',async()=>{if(currentMsAccount()){openSourceModal();return}if(!SOURCE.clientId){openSourceModal();toast('Primeiro informe o Client ID do Microsoft Entra.','warn');return}try{await loginMicrosoft()}catch(e){toast(authErrorText(e),'bad')}});
+$('#msLogoutBtn').addEventListener('click',()=>logoutMicrosoft().catch(e=>toast(e.message,'bad')));
+$('#testGraphBtn').addEventListener('click',async()=>{try{readGraphConfigFromForm();if(!currentMsAccount()){await loginMicrosoft();return}GRAPH_ITEM=null;const rows=await fetchGraphWorkbookRows(true);setConnectionStatus(`${rows.length} registros reconhecidos`,'good');toast(`Conexão validada: ${rows.length} auditoria(s).`,'good')}catch(e){setConnectionStatus('Falha no teste','bad');toast(authErrorText(e),'bad')}});
+$('#chooseLocalBtn').addEventListener('click',async()=>{try{SOURCE.type='local';SOURCE.excelSheetName=$('#localSheetName').value.trim()||'AUDITORIAS SALVAS';SOURCE.excelHeaderRow=parseInt($('#localHeaderRow').value||4)||4;const f=await selectLocalFile();if(f){const rows=await rowsFromFile(f);setData(rows);persistSource();toast(`${rows.length} registros reconhecidos.`,'good')}}catch(e){toast(e.message,'bad')}});
+function readGraphConfigFromForm(){SOURCE.type='graph';SOURCE.oneDriveUrl=$('#oneDriveUrl').value.trim();SOURCE.clientId=$('#msClientId').value.trim()||'6614d0c7-4b2e-40e6-9970-c7b285806a07';SOURCE.tenant=$('#msTenant').value;SOURCE.excelSheetName=$('#excelSheetName').value.trim()||'AUDITORIAS SALVAS';SOURCE.excelHeaderRow=Math.max(1,parseInt($('#excelHeaderRow').value||4)||4);SOURCE.stateFileName=$('#cloudStateFile').value.trim()||'GTF_Auditoria_360_estado.json';SOURCE.refreshOnOpen=$('#refreshOnOpen').value;MSAL_APP=null;GRAPH_ITEM=null;persistSource()}
+$('#saveSourceBtn').addEventListener('click',async()=>{const t=$('#sourceType').value;try{if(t==='graph'){readGraphConfigFromForm();if(!SOURCE.clientId){toast('Informe o Client ID do Microsoft Entra.','warn');return}updateSourceUI();toast('Configuração Microsoft salva. Agora entre com a conta Microsoft.','good')}else{SOURCE.type='local';SOURCE.excelSheetName=$('#localSheetName').value.trim()||'AUDITORIAS SALVAS';SOURCE.excelHeaderRow=parseInt($('#localHeaderRow').value||4)||4;SOURCE.refreshOnOpen=$('#refreshOnOpen').value;persistSource();if(!SOURCE.fileName){const f=await selectLocalFile();if(!f)return}await refreshData({askPermission:true,fromModal:true})}}catch(e){toast(e.message,'bad')}});
+$('#demoBtn').addEventListener('click',async()=>{SOURCE={type:'demo',clientId:'6614d0c7-4b2e-40e6-9970-c7b285806a07',tenant:'common',oneDriveUrl:'https://1drv.ms/x/c/25b8eabd5df737ed/IQCTccyHz20KS6xoAECcMFfdAbVvfZOCTnAuuF-FGkBBNIQ?e=nqBlCX',excelSheetName:'AUDITORIAS SALVAS',excelHeaderRow:4,stateFileName:'GTF_Auditoria_360_estado.json',fileName:'',refreshOnOpen:'no',lastUpdated:nowBR()};await clearFileHandle();persistSource();setData(JSON.parse(JSON.stringify(DEFAULT_DATA)));toast('Demonstração ativada.','good');closeSourceModal()});
+
+$('#applyBtn').addEventListener('click',renderAll);$('#clearBtn').addEventListener('click',()=>{$$('#fFilial,#fArmazem,#fGrupo,#fAuditor,#fMes').forEach(s=>s.value='');renderAll()});
+$$('#fFilial,#fArmazem,#fGrupo,#fAuditor,#fMes').forEach(s=>s.addEventListener('change',renderAll));
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab-btn');if(!b)return;$$('.tab-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');$$('.tab').forEach(x=>x.classList.remove('active'));$('#tab-'+b.dataset.tab).classList.add('active');renderAll()});
+$('#addActionBtn').addEventListener('click',()=>openActionModal());
+$('#saveActionsBtn').addEventListener('click',async()=>{saveActionsLocal();logActivity('Plano de ação salvo');try{if(SOURCE.type==='graph')await saveCloudState(true);else toast('Plano salvo neste dispositivo.','good')}catch(e){toast('Plano salvo localmente; nuvem pendente: '+e.message,'warn')}});
+$('#exportActionsBtn').addEventListener('click',exportActionsCSV);
+$('#actionCloseBtn').addEventListener('click',closeActionModal);$('#actionCancelBtn').addEventListener('click',closeActionModal);
+$('#actionModal').addEventListener('click',e=>{if(e.target.id==='actionModal')closeActionModal()});
+$('#actionSaveBtn').addEventListener('click',()=>{
+  const obj={id:EDIT_ACTION_INDEX===null?`ACT-${Date.now()}`:(ACTIONS[EDIT_ACTION_INDEX].id||`ACT-${Date.now()}`),indicador:$('#mIndicador').value.trim(),problema:$('#mProblema').value.trim(),acao:$('#mAcao').value.trim(),responsavel:$('#mResponsavel').value.trim(),prazo:$('#mPrazo').value,status:$('#mStatus').value,observacoes:$('#mObservacoes').value.trim(),updatedAt:new Date().toISOString(),updatedBy:currentMsAccount()?.username||''};
+  if(!obj.indicador||!obj.acao||!obj.responsavel){toast('Preencha indicador, ação e responsável.','warn');return}
+  const editing=EDIT_ACTION_INDEX!==null;if(editing)ACTIONS[EDIT_ACTION_INDEX]=obj;else ACTIONS.push(obj);saveActionsLocal();logActivity(`${obj.indicador}: ação ${editing?'atualizada':'criada'}`);scheduleCloudStateSave();renderActions();closeActionModal();toast('Ação salva e sincronização agendada.','good');
+});
+const meeting=$('#meetingNotes');meeting.value=localStorage.getItem('gtf_audit_meeting_notes')||'';meeting.addEventListener('input',()=>{localStorage.setItem('gtf_audit_meeting_notes',meeting.value);scheduleCloudStateSave()});
+
+
+function authErrorText(e){
+  const code=e?.errorCode||e?.code||'';
+  const msg=e?.errorMessage||e?.message||String(e||'Erro de autenticação');
+  return `${code?code+': ':''}${msg}`.replace(/\s+/g,' ').slice(0,700);
+}
+async function initMicrosoftRedirect(){
+  if(SOURCE.type!=='graph'||!SOURCE.clientId||location.protocol==='file:')return false;
+  const app=buildMsal();
+  try{
+    const result=await app.handleRedirectPromise();
+    const account=result?.account||app.getAllAccounts()[0]||null;
+    if(account&&app.setActiveAccount)app.setActiveAccount(account);
+    updateMsAccountUI();
+    if(result?.account){
+      setConnectionStatus('Microsoft conectado. Sincronizando…','good');
+      toast(`Microsoft conectado: ${result.account.username||result.account.name||'conta autorizada'}.`,'good');
+      try{await refreshData({askPermission:false});await loadCloudState(false).catch(()=>{});updateLiveInfo()}catch(e){console.error('Falha após login:',e);toast(`Login concluído, mas a leitura do OneDrive falhou: ${authErrorText(e)}`,'bad')}
+      return true;
+    }
+    return !!account;
+  }catch(e){
+    console.error('MSAL redirect error:',e);
+    setConnectionStatus('Falha no retorno Microsoft','bad');
+    toast(`Autenticação Microsoft: ${authErrorText(e)}`,'bad');
+    return false;
+  }
+}
+
+// ===== PWA / dados vivos =====
+let deferredInstallPrompt=null, autoTimer=null, nextTimer=null, nextAt=0;
+function updateOnlineState(){const on=navigator.onLine;$('#onlineText').textContent=on?'Online':'Offline';$('#onlineDot').classList.toggle('offline',!on)}
+window.addEventListener('online',()=>{updateOnlineState();toast('Conexão restaurada.','good')});window.addEventListener('offline',()=>{updateOnlineState();toast('Você está offline. O app continua com os últimos dados salvos.','warn')});updateOnlineState();
+function updateLiveInfo(){if($('#liveSource'))$('#liveSource').textContent=sourceLabel();if($('#liveLastSync'))$('#liveLastSync').textContent=SOURCE.lastUpdated||'não sincronizado'}
+function startAutoRefresh(enabled){
+  clearInterval(autoTimer);clearInterval(nextTimer);localStorage.setItem('gtf_auto_refresh',enabled?'yes':'no');
+  if(!enabled){$('#nextSync').textContent='manual';return}
+  const schedule=()=>{nextAt=Date.now()+60000};schedule();
+  nextTimer=setInterval(()=>{$('#nextSync').textContent=`${Math.max(0,Math.ceil((nextAt-Date.now())/1000))}s`},1000);
+  autoTimer=setInterval(async()=>{schedule();if(SOURCE.type==='demo')return;try{await refreshData({askPermission:false})}catch(e){}updateLiveInfo()},60000);
+}
+$('#autoRefreshToggle').checked=localStorage.getItem('gtf_auto_refresh')==='yes';startAutoRefresh($('#autoRefreshToggle').checked);$('#autoRefreshToggle').addEventListener('change',e=>startAutoRefresh(e.target.checked));
+$('#syncNowBtn').addEventListener('click',async()=>{try{await refreshData({askPermission:true});updateLiveInfo()}catch(e){}});
+window.addEventListener('focus',()=>{if($('#autoRefreshToggle').checked&&SOURCE.type!=='demo')refreshData({askPermission:false}).then(updateLiveInfo).catch(()=>{})});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;$('#installBtn').classList.add('show')});
+$('#installBtn').addEventListener('click',async()=>{if(!deferredInstallPrompt){toast('Para instalar, abra esta PWA em um endereço HTTPS.','warn');return}deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$('#installBtn').classList.remove('show')});
+window.addEventListener('appinstalled',()=>toast('GTF Auditoria 360 instalada.','good'));
+if('serviceWorker' in navigator && location.protocol!=='file:')window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(console.warn));
+function activateTab(tab){
+  $$('.tab-btn').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));$$('.tab').forEach(x=>x.classList.toggle('active',x.id==='tab-'+tab));$$('#mobileNav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===tab));renderAll();window.scrollTo({top:0,behavior:'smooth'});
+}
+$('#mobileNav').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(b)activateTab(b.dataset.tab)});
+$('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab-btn');if(b)$$('#mobileNav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===b.dataset.tab))});
+const originalUpdateSourceUI=updateSourceUI;updateSourceUI=function(){originalUpdateSourceUI();updateLiveInfo()};
+const originalRefreshData=refreshData;refreshData=async function(opts={}){const l=$('#livebar');l&&l.classList.add('sync-flash');try{return await originalRefreshData(opts)}finally{l&&l.classList.remove('sync-flash');updateLiveInfo()}};
+updateLiveInfo();
+
+initFilters();renderAll();updateSourceUI();
+(async()=>{
+  await initMicrosoftRedirect();
+  updateMsAccountUI();
+  if(SOURCE.type!=='demo'&&SOURCE.refreshOnOpen==='yes'&&currentMsAccount())setTimeout(()=>refreshData({askPermission:false}).catch(()=>{}),800);
+})();
+</script>
+</body>
+</html>
