@@ -436,7 +436,7 @@
   <div class="modal password-box" role="dialog" aria-modal="true" aria-labelledby="githubTokenTitle">
     <div class="modal-head">
       <div>
-        <h3 id="githubTokenTitle">Publicar para Todos</h3>
+        <h3 id="githubTokenTitle">Sincronizar e Publicar para Todos</h3>
         <p>Cole o token GitHub e publique. Só isso.</p>
       </div>
       <button class="modal-close" id="githubTokenCloseBtn" aria-label="Fechar">×</button>
@@ -642,7 +642,7 @@ function applyModeUI(){
   document.body.classList.toggle('mode-public',!isAdminMode());
   const btn=$('#adminAccessBtn');
   if(btn)btn.textContent=isAdminMode()?'↩ Sair do Admin':'🔒 Acesso Administrativo';
-  if($('#syncNowBtn'))$('#syncNowBtn').textContent=isAdminMode()?'⟳ Sincronizar agora':'⟳ Atualizar apresentação';
+  if($('#syncNowBtn'))$('#syncNowBtn').textContent=isAdminMode()?'⟳ Sincronizar e publicar':'⟳ Atualizar apresentação';
   if($('#refreshBtn'))$('#refreshBtn').textContent=isAdminMode()?'⟳ Atualizar Dados':'⟳ Atualizar Dados';
   if(!isAdminMode()&&$('#tab-acoes')?.classList.contains('active'))activateTab('resumo');
   updateLiveInfo();
@@ -674,24 +674,43 @@ async function exitAdmin(){
   applyModeUI();activateTab('resumo');toast('Modo Público ativado.','good');
 }
 async function loadPublicData({silent=false}={}){
+  const cached=JSON.parse(localStorage.getItem('gtf_public_cached_data')||'null');
   try{
     let res=await fetch(`${PUBLIC_DATA_URL}?v=${Date.now()}`,{cache:'no-store'});
     if(!res.ok){
       res=await fetch(`./dados_publicos.json?v=${Date.now()}`,{cache:'no-store'});
     }
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
+
     const payload=await res.json();
-    const rows=Array.isArray(payload)?payload:(payload.data||[]);
-    if(!Array.isArray(rows)||!rows.length)throw new Error('Publicação pública sem registros.');
-    PUBLIC_META=Array.isArray(payload)?{generatedAt:'',rowCount:rows.length}:(payload.meta||{rowCount:rows.length});
-    const clean=cleanRows(rows);
+    const remoteRows=Array.isArray(payload)?payload:(payload.data||[]);
+    if(!Array.isArray(remoteRows)||!remoteRows.length)throw new Error('Publicação pública sem registros.');
+
+    const remoteMeta=Array.isArray(payload)
+      ? {generatedAt:'',generatedAtISO:'',rowCount:remoteRows.length}
+      : (payload.meta||{rowCount:remoteRows.length});
+
+    const remoteISO=Date.parse(remoteMeta.generatedAtISO||'')||0;
+    const cachedISO=Date.parse(cached?.meta?.generatedAtISO||'')||0;
+
+    if(cached?.data?.length && cachedISO>remoteISO){
+      PUBLIC_META=cached.meta||{};
+      if(!isAdminMode())setData(cached.data,{cache:false});
+      if($('#publicPublishedAt'))$('#publicPublishedAt').textContent=
+        PUBLIC_META.generatedAt?`Publicado em ${PUBLIC_META.generatedAt}`:`${cached.data.length} auditoria(s) publicadas`;
+      if(!silent)toast(`Apresentação atualizada: ${cached.data.length} auditoria(s).`,'good');
+      return cached.data;
+    }
+
+    PUBLIC_META=remoteMeta;
+    const clean=cleanRows(remoteRows);
     localStorage.setItem('gtf_public_cached_data',JSON.stringify({meta:PUBLIC_META,data:clean}));
     if(!isAdminMode())setData(clean,{cache:false});
-    if($('#publicPublishedAt'))$('#publicPublishedAt').textContent=PUBLIC_META.generatedAt?`Publicado em ${PUBLIC_META.generatedAt}`:`${clean.length} auditoria(s) publicadas`;
+    if($('#publicPublishedAt'))$('#publicPublishedAt').textContent=
+      PUBLIC_META.generatedAt?`Publicado em ${PUBLIC_META.generatedAt}`:`${clean.length} auditoria(s) publicadas`;
     if(!silent)toast(`Apresentação atualizada: ${clean.length} auditoria(s).`,'good');
     return clean;
   }catch(e){
-    const cached=JSON.parse(localStorage.getItem('gtf_public_cached_data')||'null');
     if(cached?.data?.length){
       PUBLIC_META=cached.meta||{};
       if(!isAdminMode())setData(cached.data,{cache:false});
@@ -800,6 +819,7 @@ async function publishPublicToGithub(){
     });
 
     localStorage.setItem('gtf_public_cached_data',JSON.stringify(payload));
+    sessionStorage.setItem('gtf_last_published_iso',payload.meta.generatedAtISO||'');
     PUBLIC_META=payload.meta;
     updateGithubPublishBadge();
 
@@ -1331,7 +1351,29 @@ function startAutoRefresh(enabled){
   }catch(e){}updateLiveInfo()},60000);
 }
 $('#autoRefreshToggle').checked=localStorage.getItem('gtf_auto_refresh')==='yes';$('#autoRefreshToggle').addEventListener('change',e=>startAutoRefresh(e.target.checked));
-$('#syncNowBtn').addEventListener('click',async()=>{try{if(isAdminMode())await refreshData({askPermission:true});else await loadPublicData();updateLiveInfo()}catch(e){}});
+$('#syncNowBtn').addEventListener('click',async()=>{
+  try{
+    if(isAdminMode()){
+      await refreshData({askPermission:true});
+      updateLiveInfo();
+      toast(`Sincronização concluída: ${DATA.length} auditoria(s). Preparando publicação pública...`,'good');
+
+      if(GITHUB_TOKEN){
+        openGithubTokenModal();
+        setPublishProgress('Dados sincronizados','Publicando automaticamente para todos...');
+        setTimeout(()=>publishPublicToGithub(),80);
+      }else{
+        openGithubTokenModal();
+        setPublishProgress('Dados sincronizados',`${DATA.length} auditoria(s) prontas. Cole o token uma vez e clique em Publicar agora.`);
+      }
+    }else{
+      await loadPublicData();
+      updateLiveInfo();
+    }
+  }catch(e){
+    console.error(e);
+  }
+});
 window.addEventListener('focus',()=>{if(isAdminMode()){if($('#autoRefreshToggle').checked&&SOURCE.type!=='demo')refreshData({askPermission:false}).then(updateLiveInfo).catch(()=>{})}else loadPublicData({silent:true}).then(updateLiveInfo).catch(()=>{})});
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;$('#installBtn').classList.add('show')});
 $('#installBtn').addEventListener('click',async()=>{if(!deferredInstallPrompt){toast('Para instalar, abra esta PWA em um endereço HTTPS.','warn');return}deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$('#installBtn').classList.remove('show')});
