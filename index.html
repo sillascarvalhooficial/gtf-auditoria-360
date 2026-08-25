@@ -213,7 +213,7 @@
   }
 
 
-  /* ===== V9 • Publicação segura via Cloudflare Worker ===== */
+  /* ===== V8 • Publicação automática GitHub ===== */
   .github-token-input{
     width:100%;background:#071c3d;color:#fff;border:1px solid rgba(255,255,255,.16);
     border-radius:12px;padding:12px 13px;outline:none;font-size:13px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace
@@ -242,7 +242,7 @@
       <div class="header-actions">
         <span class="pill mode-chip public public-only" id="publicModeChip">◉ MODO PÚBLICO</span>
         <span class="pill mode-chip admin admin-only" id="adminModeChip">◆ MODO ADMIN</span>
-        <span class="pill admin-only" id="githubPublishBadge" title="Publicador seguro">Publicador: Cloudflare</span>
+        <span class="pill admin-only" id="githubPublishBadge" title="Publicação pública no GitHub">GitHub: token por sessão</span>
         <span class="pill" id="sourceBadge" title="Fonte de dados atual">Fonte: Apresentação Pública</span>
         <span class="pill" id="baseBadge">Base: —</span>
         <button class="action-btn" id="refreshBtn">⟳ Atualizar Dados</button>
@@ -267,7 +267,7 @@
 
   <div class="public-banner public-only" id="publicBanner">
     <span>◉</span>
-    <span><b>Apresentação pública:</b> acesso somente leitura, sem login Microsoft. Os dados são publicados pelo administrador via serviço seguro e atualizam automaticamente para todos.</span>
+    <span><b>Apresentação pública:</b> acesso somente leitura, sem login Microsoft. Os dados são publicados pelo administrador e atualizam automaticamente para todos.</span>
     <span class="public-update-note" id="publicPublishedAt"></span>
   </div>
 
@@ -432,27 +432,32 @@
 </div>
 
 
-<div class="modal-backdrop" id="publishModal" aria-hidden="true">
-  <div class="modal password-box" role="dialog" aria-modal="true" aria-labelledby="publishModalTitle">
+<div class="modal-backdrop" id="githubTokenModal" aria-hidden="true">
+  <div class="modal password-box" role="dialog" aria-modal="true" aria-labelledby="githubTokenTitle">
     <div class="modal-head">
       <div>
-        <h3 id="publishModalTitle">Publicar para Todos</h3>
-        <p>Os dados sincronizados serão enviados ao publicador seguro e disponibilizados para todos os usuários do modo público.</p>
+        <h3 id="githubTokenTitle">Publicar para Todos</h3>
+        <p>Cole o token GitHub e publique. Só isso.</p>
       </div>
-      <button class="modal-close" id="publishModalCloseBtn" aria-label="Fechar">×</button>
+      <button class="modal-close" id="githubTokenCloseBtn" aria-label="Fechar">×</button>
     </div>
     <div class="modal-body">
-      <div class="source-box good">
-        <b>Sem token no navegador:</b> a credencial do GitHub fica protegida como Secret no Cloudflare Worker.
+      <div class="source-field">
+        <label>Token GitHub</label>
+        <input class="github-token-input" id="githubTokenInput" type="password" autocomplete="off" placeholder="github_pat_..." />
+        <small>O token fica somente nesta sessão. Enquanto a aba permanecer aberta, você não precisa digitá-lo novamente.</small>
       </div>
-      <div class="publish-progress show" id="publishProgress">
-        <strong id="publishProgressTitle">Pronto para publicar</strong>
-        <div id="publishProgressText" style="margin-top:5px">Clique em “Publicar agora”.</div>
+      <div class="source-box warn" style="margin-top:14px">
+        <b>Necessário:</b> token do repositório <code>gtf-auditoria-360</code> com <code>Contents: Read and write</code>.
+      </div>
+      <div class="publish-progress" id="publishProgress">
+        <strong id="publishProgressTitle">Preparando publicação...</strong>
+        <div id="publishProgressText" style="margin-top:5px"></div>
       </div>
     </div>
     <div class="modal-actions">
-      <button id="publishModalCancelBtn" type="button">Cancelar</button>
-      <button class="primary" id="publishNowBtn" type="button">🚀 Publicar agora</button>
+      <button id="githubTokenCancelBtn" type="button">Cancelar</button>
+      <button class="primary" id="githubTokenPublishBtn" type="button">🚀 Publicar agora</button>
     </div>
   </div>
 </div>
@@ -564,7 +569,11 @@ const DEFAULT_DATA = [
 
 const ADMIN_PASSWORD_SHA256='81d566fb189d531865580ffde45ceb613b07dcf1c7e45a68729ab7928a5af2b5';
 const PUBLIC_DATA_URL='https://raw.githubusercontent.com/sillascarvalhooficial/gtf-auditoria-360/main/dados_publicos.json';
-const PUBLISH_WORKER_URL='https://sparkling-rice-88b5.sillascarvalhooficial.workers.dev';
+const GITHUB_OWNER='sillascarvalhooficial';
+const GITHUB_REPO='gtf-auditoria-360';
+const GITHUB_BRANCH='principal';
+const GITHUB_PUBLIC_PATH='dados_publicos.json';
+let GITHUB_TOKEN=sessionStorage.getItem('gtf_github_token')||'';
 let APP_MODE=sessionStorage.getItem('gtf_admin_session')==='1'?'admin':'public';
 let PUBLIC_META={generatedAt:'',rowCount:0};
 let DATA = APP_MODE==='admin'
@@ -707,16 +716,23 @@ function buildPublicPayload(){
     data:rows
   };
 }
-function openPublishModal(){
-  if(!isAdminMode()){toast('Entre no modo Administrador.','warn');return}
-  $('#publishProgressTitle').textContent='Pronto para publicar';
-  $('#publishProgressText').textContent=`${DATA.length} auditoria(s) sincronizada(s) serão publicadas.`;
-  $('#publishModal').classList.add('open');
-  $('#publishModal').setAttribute('aria-hidden','false');
+function utf8ToBase64(str){
+  const bytes=new TextEncoder().encode(str);
+  let binary='';
+  for(const b of bytes)binary+=String.fromCharCode(b);
+  return btoa(binary);
 }
-function closePublishModal(){
-  $('#publishModal').classList.remove('open');
-  $('#publishModal').setAttribute('aria-hidden','true');
+function openGithubTokenModal(){
+  if(!isAdminMode()){toast('Entre no modo Administrador.','warn');return}
+  $('#githubTokenInput').value=GITHUB_TOKEN||'';
+  $('#publishProgress').classList.remove('show');
+  $('#githubTokenModal').classList.add('open');
+  $('#githubTokenModal').setAttribute('aria-hidden','false');
+  setTimeout(()=>$('#githubTokenInput').focus(),60);
+}
+function closeGithubTokenModal(){
+  $('#githubTokenModal').classList.remove('open');
+  $('#githubTokenModal').setAttribute('aria-hidden','true');
 }
 function setPublishProgress(title,text=''){
   $('#publishProgressTitle').textContent=title;
@@ -725,84 +741,98 @@ function setPublishProgress(title,text=''){
 }
 function updateGithubPublishBadge(){
   const el=$('#githubPublishBadge');
-  if(el)el.textContent='Publicador: Cloudflare';
+  if(!el)return;
+  el.textContent=GITHUB_TOKEN?'GitHub: token na sessão':'GitHub: token por sessão';
 }
-async function publishPublicViaWorker(){
+async function githubRequest(url,options={}){
+  if(!GITHUB_TOKEN)throw new Error('Token GitHub não informado.');
+  const headers={
+    'Accept':'application/vnd.github+json',
+    'Authorization':`Bearer ${GITHUB_TOKEN}`,
+    'X-GitHub-Api-Version':'2022-11-28',
+    ...(options.headers||{})
+  };
+  const res=await fetch(url,{...options,headers});
+  let body=null;
+  const text=await res.text();
+  if(text){try{body=JSON.parse(text)}catch{body={message:text}}}
+  if(!res.ok){
+    const msg=body?.message||`HTTP ${res.status}`;
+    const err=new Error(msg);err.status=res.status;err.body=body;throw err;
+  }
+  return body;
+}
+async function publishPublicToGithub(){
   if(!isAdminMode()){toast('Entre no modo Administrador.','warn');return}
-  const btn=$('#publishNowBtn');
+  const token=$('#githubTokenInput').value.trim();
+  if(token){
+    GITHUB_TOKEN=token;
+    sessionStorage.setItem('gtf_github_token',token);
+  }
+  if(!GITHUB_TOKEN){toast('Informe o token GitHub.','warn');return}
+  const btn=$('#githubTokenPublishBtn');
   btn.disabled=true;
   try{
-    setPublishProgress('1/4 • Validando administrador','Usando a sessão Microsoft já conectada...');
-    const msToken=await graphToken(true);
+    setPublishProgress('1/4 • Validando acesso ao GitHub','Consultando o arquivo público atual...');
+    const apiBase=`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PUBLIC_PATH}`;
+    let existing=null;
+    try{
+      existing=await githubRequest(`${apiBase}?ref=${encodeURIComponent(GITHUB_BRANCH)}`,{method:'GET'});
+    }catch(e){
+      if(e.status!==404)throw e;
+    }
 
     setPublishProgress('2/4 • Preparando dados públicos',`${DATA.length} auditoria(s) serão publicadas.`);
     const payload=buildPublicPayload();
+    const content=utf8ToBase64(JSON.stringify(payload,null,2));
 
-    setPublishProgress('3/4 • Publicando para Todos','Enviando ao Cloudflare Worker seguro...');
-    const res=await fetch(`${PUBLISH_WORKER_URL}/publish`,{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'Authorization':`Bearer ${msToken}`
-      },
-      body:JSON.stringify(payload),
-      cache:'no-store'
+    setPublishProgress('3/4 • Publicando no GitHub','Atualizando dados_publicos.json...');
+    const body={
+      message:`Atualizar dados públicos • ${payload.meta.generatedAt}`,
+      content,
+      branch:GITHUB_BRANCH
+    };
+    if(existing?.sha)body.sha=existing.sha;
+    const result=await githubRequest(apiBase,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)
     });
-
-    let result=null;
-    const text=await res.text();
-    if(text){try{result=JSON.parse(text)}catch{result={error:text}}}
-    if(!res.ok){
-      const err=new Error(result?.error||`HTTP ${res.status}`);
-      err.status=res.status;
-      throw err;
-    }
 
     localStorage.setItem('gtf_public_cached_data',JSON.stringify(payload));
     PUBLIC_META=payload.meta;
     updateGithubPublishBadge();
 
-    setPublishProgress('4/4 • Confirmando publicação','Verificando a nova versão pública...');
+    setPublishProgress('4/4 • Publicação concluída','Aguardando propagação para a versão pública...');
+    await new Promise(r=>setTimeout(r,2500));
+
+    // Verify via raw URL with cache-busting. Retry briefly because raw CDN may lag.
     let verified=false;
-    for(let i=0;i<8;i++){
+    for(let i=0;i<6;i++){
       try{
         const vr=await fetch(`${PUBLIC_DATA_URL}?v=${Date.now()}-${i}`,{cache:'no-store'});
         if(vr.ok){
           const vp=await vr.json();
-          const rows=Array.isArray(vp)?vp:(vp.data||[]);
-          if(rows.length===payload.data.length){
-            verified=true;
-            PUBLIC_META=vp?.meta||payload.meta;
-            localStorage.setItem('gtf_public_cached_data',JSON.stringify({meta:PUBLIC_META,data:rows}));
-            break;
-          }
+          if((vp?.meta?.generatedAtISO||'')===payload.meta.generatedAtISO){verified=true;break}
         }
       }catch{}
-      await new Promise(r=>setTimeout(r,1800));
+      await new Promise(r=>setTimeout(r,2500));
     }
 
     if(verified){
-      setPublishProgress('✅ Publicado para Todos',`${payload.data.length} auditoria(s) já estão disponíveis para PC, celular, tablet e QR Code.`);
+      setPublishProgress('✅ Publicado para Todos',`${payload.data.length} auditoria(s) já estão disponíveis no modo público.`);
       toast(`Publicado para Todos: ${payload.data.length} auditoria(s).`,'good');
     }else{
-      setPublishProgress('✅ Publicação enviada',`${payload.data.length} auditoria(s) foram gravadas. A propagação pública pode levar alguns segundos.`);
-      toast('Publicação concluída. A área pública atualizará automaticamente.','good');
+      setPublishProgress('✅ Enviado ao GitHub',`${payload.data.length} auditoria(s) foram gravadas. A propagação pública pode levar alguns segundos.`);
+      toast('GitHub atualizado. A versão pública será atualizada em instantes.','good');
     }
-    setTimeout(()=>closePublishModal(),2200);
+    setTimeout(()=>closeGithubTokenModal(),1800);
   }catch(e){
     console.error(e);
     let msg=e.message||'Falha ao publicar.';
-    if(e.status===401 || msg.includes('LOGIN_MICROSOFT') || msg.includes('TOKEN_MICROSOFT')){
-      msg='Sessão Microsoft inválida. Entre novamente na Microsoft e tente publicar.';
-    }else if(e.status===403 || msg.includes('USUARIO_NAO_AUTORIZADO')){
-      msg='Esta conta Microsoft não está autorizada a publicar.';
-    }else if(msg.includes('GITHUB_TOKEN_NAO_CONFIGURADO')){
-      msg='O Secret GITHUB_TOKEN ainda não está configurado no Cloudflare.';
-    }else if(msg.includes('GITHUB_401') || msg.includes('GITHUB_403')){
-      msg='O token GitHub guardado no Cloudflare não possui acesso de gravação.';
-    }else if(msg.includes('Failed to fetch')){
-      msg='Não foi possível acessar o Cloudflare Worker. Verifique a conexão e a configuração do Worker.';
-    }
+    if(e.status===401)msg='Token GitHub inválido, expirado ou digitado incorretamente.';
+    if(e.status===403)msg='O token precisa ter Contents: Read and write no repositório gtf-auditoria-360.';
+    if(e.status===404)msg='Repositório/arquivo não encontrado pelo token.';
     setPublishProgress('❌ Falha na publicação',msg);
     toast(msg,'bad');
   }finally{
@@ -1219,12 +1249,12 @@ $('#adminPasswordCancelBtn').addEventListener('click',closeAdminPasswordModal);
 $('#adminPasswordSubmitBtn').addEventListener('click',unlockAdmin);
 $('#adminPasswordInput').addEventListener('keydown',e=>{if(e.key==='Enter')unlockAdmin()});
 $('#adminPasswordModal').addEventListener('click',e=>{if(e.target.id==='adminPasswordModal')closeAdminPasswordModal()});
-$('#publishModalCloseBtn').addEventListener('click',closePublishModal);
-$('#publishModalCancelBtn').addEventListener('click',closePublishModal);
-$('#publishNowBtn').addEventListener('click',publishPublicViaWorker);
-$('#publishModal').addEventListener('click',e=>{if(e.target.id==='publishModal')closePublishModal()});
+$('#githubTokenCloseBtn').addEventListener('click',closeGithubTokenModal);
+$('#githubTokenCancelBtn').addEventListener('click',closeGithubTokenModal);
+$('#githubTokenPublishBtn').addEventListener('click',publishPublicToGithub);
+$('#githubTokenModal').addEventListener('click',e=>{if(e.target.id==='githubTokenModal')closeGithubTokenModal()});
 
-$('#publishPublicBtn').addEventListener('click',openPublishModal);
+$('#publishPublicBtn').addEventListener('click',openGithubTokenModal);
 $('#sourceBtn').addEventListener('click',openSourceModal);$('#sourceCloseBtn').addEventListener('click',closeSourceModal);$('#sourceCancelBtn').addEventListener('click',closeSourceModal);$('#sourceModal').addEventListener('click',e=>{if(e.target.id==='sourceModal')closeSourceModal()});$('#sourceType').addEventListener('change',toggleSourceFields);
 $('#openOneDriveBtn').addEventListener('click',()=>{const u=$('#oneDriveUrl').value.trim()||SOURCE.oneDriveUrl;if(u)window.open(u,'_blank','noopener,noreferrer')});
 $('#msLoginBtn').addEventListener('click',async()=>{try{readGraphConfigFromForm();await loginMicrosoft()}catch(e){toast(authErrorText(e),'bad')}});
