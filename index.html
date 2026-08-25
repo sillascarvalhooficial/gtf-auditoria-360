@@ -180,11 +180,43 @@
   .auth-good{border-color:rgba(32,199,118,.35)!important;background:rgba(32,199,118,.10)!important;color:#87f2bb!important}
   .cloud-note{border-left:3px solid var(--lime);padding:10px 12px;background:rgba(184,238,33,.055);border-radius:8px;color:#c9d8ea;font-size:11px;line-height:1.5}
   .readonly-code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:10px!important;color:#bfe7ff!important}
+
+  /* ===== V7 • Modo Público + Modo Administrador ===== */
+  .admin-only,.public-only{transition:opacity .15s ease}
+  body.mode-public .admin-only{display:none!important}
+  body.mode-admin .public-only{display:none!important}
+  body.mode-public #tab-acoes,
+  body.mode-public .tab-btn[data-tab="acoes"],
+  body.mode-public #mobileNav button[data-tab="acoes"]{display:none!important}
+  .mode-chip{font-weight:900;letter-spacing:.35px}
+  .mode-chip.public{background:rgba(22,184,255,.13);border-color:rgba(22,184,255,.30);color:#9cddff}
+  .mode-chip.admin{background:rgba(184,238,33,.12);border-color:rgba(184,238,33,.32);color:#dfff7d}
+  .admin-access-btn{border-color:rgba(184,238,33,.28)!important}
+  .public-update-note{font-size:11px;color:#aac0dc}
+  .password-box{max-width:460px}
+  .password-box .modal-body{padding-top:16px}
+  .password-input{
+    width:100%;background:#071c3d;color:#fff;border:1px solid rgba(255,255,255,.16);
+    border-radius:12px;padding:13px 14px;outline:none;font-size:18px;letter-spacing:5px;text-align:center
+  }
+  .password-input:focus{border-color:rgba(184,238,33,.65);box-shadow:0 0 0 3px rgba(184,238,33,.10)}
+  .public-banner{
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 28px 12px;padding:10px 13px;
+    border-radius:12px;background:rgba(22,184,255,.06);border:1px solid rgba(22,184,255,.17);
+    color:#bad0e8;font-size:11px
+  }
+  .public-banner b{color:#fff}
+  body.mode-admin .public-banner{display:none}
+  @media(max-width:700px){
+    .public-banner{margin:0 14px 10px}
+    #adminAccessBtn{padding:8px 10px}
+  }
+
 </style>
 <script src="https://alcdn.msauth.net/browser/2.35.0/js/msal-browser.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
-<body>
+<body class="mode-public">
 <div class="app">
   <header class="topbar">
     <div class="header">
@@ -197,12 +229,16 @@
         </div>
       </div>
       <div class="header-actions">
-        <span class="pill" id="sourceBadge" title="Fonte de dados atual">Fonte: Demonstração</span>
-        <span class="pill" id="baseBadge">Base: 2 auditorias</span>
+        <span class="pill mode-chip public public-only" id="publicModeChip">◉ MODO PÚBLICO</span>
+        <span class="pill mode-chip admin admin-only" id="adminModeChip">◆ MODO ADMIN</span>
+        <span class="pill" id="sourceBadge" title="Fonte de dados atual">Fonte: Apresentação Pública</span>
+        <span class="pill" id="baseBadge">Base: —</span>
         <button class="action-btn" id="refreshBtn">⟳ Atualizar Dados</button>
-        <button class="action-btn" id="sourceBtn">⚙ Fonte de Dados</button>
-        <button class="action-btn" id="msHeaderBtn">◉ Entrar Microsoft</button>
+        <button class="action-btn admin-only" id="publishPublicBtn">⇩ Gerar dados públicos</button>
+        <button class="action-btn admin-only" id="sourceBtn">⚙ Fonte de Dados</button>
+        <button class="action-btn admin-only" id="msHeaderBtn">◉ Entrar Microsoft</button>
         <button class="install-btn" id="installBtn">⬇ Instalar App</button>
+        <button class="action-btn admin-access-btn" id="adminAccessBtn">🔒 Acesso Administrativo</button>
         <input id="fileInput" type="file" accept=".csv,.json,.xlsx,.xls,.xlsm,.xlsb,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" />
         <span class="pill status-pill" id="topStatus">▲ STATUS: CRÍTICO</span>
       </div>
@@ -213,9 +249,15 @@
       <button class="tab-btn" data-tab="divergencias">⌕ 3. Divergências e Itens</button>
       <button class="tab-btn" data-tab="financeiro">$ 4. Impacto Financeiro</button>
       <button class="tab-btn" data-tab="grupos">▦ 5. Grupos e Capital</button>
-      <button class="tab-btn" data-tab="acoes">✓ 6. Plano de Ação</button>
+      <button class="tab-btn admin-only" data-tab="acoes">✓ 6. Plano de Ação</button>
     </nav>
   </header>
+
+  <div class="public-banner public-only" id="publicBanner">
+    <span>◉</span>
+    <span><b>Apresentação pública:</b> acesso somente leitura, sem login Microsoft. Os dados vêm do arquivo <code>dados_publicos.json</code>.</span>
+    <span class="public-update-note" id="publicPublishedAt"></span>
+  </div>
 
   <div class="filters-wrap">
     <div class="filters">
@@ -237,8 +279,8 @@
     <span class="live-chip">Última sincronização: <b id="liveLastSync">—</b></span>
     <span class="live-chip">Próxima: <b id="nextSync">manual</b></span>
     <span class="live-spacer"></span>
-    <label class="toggle"><input type="checkbox" id="autoRefreshToggle"> Atualização automática (60s)</label>
-    <button class="small-btn" id="syncNowBtn">⟳ Sincronizar agora</button>
+    <label class="toggle admin-only"><input type="checkbox" id="autoRefreshToggle"> Atualização automática (60s)</label>
+    <button class="small-btn" id="syncNowBtn">⟳ Atualizar apresentação</button>
   </div>
 
   <main>
@@ -332,7 +374,7 @@
       <div class="panel" style="margin-top:14px"><div class="panel-head"><h3>Resumo por grupo</h3><span>capital e criticidade</span></div><div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Auditorias</th><th>Itens</th><th>Assertividade</th><th>Divergência</th><th>Capital</th><th>Impacto</th><th>Risco</th></tr></thead><tbody id="groupTable"></tbody></table></div></div>
     </section>
 
-    <section class="tab" id="tab-acoes">
+    <section class="tab admin-only" id="tab-acoes">
       <div class="section-title"><div><h2>Painel de Decisões</h2><p>Da reunião para a execução: responsáveis, prazos, status, observações e acompanhamento.</p></div><div class="actions-toolbar"><button class="small-btn lime" id="addActionBtn">＋ Nova Ação</button><button class="small-btn" id="exportActionsBtn">⇩ Exportar CSV</button><button class="small-btn" id="saveActionsBtn">Salvar ações</button></div></div>
       <div class="decision-kpis" id="actionKpis"></div>
       <div class="panel">
@@ -350,6 +392,32 @@
   </main>
 </div>
 
+
+
+<div class="modal-backdrop" id="adminPasswordModal" aria-hidden="true">
+  <div class="modal password-box" role="dialog" aria-modal="true" aria-labelledby="adminPasswordTitle">
+    <div class="modal-head">
+      <div>
+        <h3 id="adminPasswordTitle">Acesso Administrativo</h3>
+        <p>A senha libera os controles administrativos. O acesso ao OneDrive continua protegido pelo login Microsoft.</p>
+      </div>
+      <button class="modal-close" id="adminPasswordCloseBtn" aria-label="Fechar">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="source-field">
+        <label>Senha administrativa</label>
+        <input class="password-input" id="adminPasswordInput" type="password" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="••••" />
+      </div>
+      <div class="source-box warn" style="margin-top:14px">
+        <b>Segurança:</b> esta senha funciona como barreira de interface. A proteção real da planilha permanece no Microsoft Entra + OneDrive.
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button id="adminPasswordCancelBtn" type="button">Cancelar</button>
+      <button class="primary" id="adminPasswordSubmitBtn" type="button">Entrar no modo Admin</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-backdrop" id="sourceModal" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sourceModalTitle">
@@ -431,7 +499,7 @@
   <button data-tab="qualidade"><span>◎</span>Qualidade</button>
   <button data-tab="divergencias"><span>⚠</span>Diverg.</button>
   <button data-tab="financeiro"><span>$</span>Impacto</button>
-  <button data-tab="acoes"><span>✓</span>Ações</button>
+  <button class="admin-only" data-tab="acoes"><span>✓</span>Ações</button>
 </nav>
 
 <div class="toast" id="toast"></div>
@@ -456,7 +524,13 @@ const DEFAULT_DATA = [
   }
 ];
 
-let DATA = JSON.parse(localStorage.getItem('gtf_audit_cached_data') || 'null') || JSON.parse(JSON.stringify(DEFAULT_DATA));
+const ADMIN_PASSWORD_SHA256='81d566fb189d531865580ffde45ceb613b07dcf1c7e45a68729ab7928a5af2b5';
+const PUBLIC_DATA_URL='./dados_publicos.json';
+let APP_MODE=sessionStorage.getItem('gtf_admin_session')==='1'?'admin':'public';
+let PUBLIC_META={generatedAt:'',rowCount:0};
+let DATA = APP_MODE==='admin'
+  ? (JSON.parse(localStorage.getItem('gtf_audit_cached_data') || 'null') || JSON.parse(JSON.stringify(DEFAULT_DATA)))
+  : (JSON.parse(localStorage.getItem('gtf_public_cached_data') || 'null')?.data || JSON.parse(JSON.stringify(DEFAULT_DATA)));
 let SOURCE = JSON.parse(localStorage.getItem('gtf_audit_source_v4') || 'null') || {
   type:'graph', clientId:'6614d0c7-4b2e-40e6-9970-c7b285806a07', tenant:'common',
   oneDriveUrl:'https://1drv.ms/x/c/25b8eabd5df737ed/IQCTccyHz20KS6xoAECcMFfdAbVvfZOCTnAuuF-FGkBBNIQ?e=nqBlCX',
@@ -497,6 +571,105 @@ const shortBranch = s => String(s||'').replace(/^\d+-GTFOODS\s*/i,'').replace(/\
 const riskOf = d => d<=2?'Conforme':d<=5?'Atenção':d<=10?'Alto':'Crítico';
 const riskColor = r => ({'Conforme':'#20c776','Atenção':'#f7d51d','Alto':'#ff9d16','Crítico':'#ff4d3f'}[r]||'#16b8ff');
 const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const PUBLIC_FIELDS=[
+  'ID_Auditoria','Data_Auditoria','Mes_Referencia','Auditor','Filial','Armazem','Grupo',
+  'Itens_Auditados','Itens_Sobra','Itens_Falta','Itens_OK','Itens_Divergentes','Itens_Avaria',
+  'Volume_Auditado','Volume_Sobra','Volume_Falta','Volume_Divergente','Volume_Avarias',
+  'Valor_Estoque','Valor_Sobra','Valor_Falta','Saldo_Liquido','Valor_Avarias','Impacto_Bruto',
+  'Acuracidade','Assertividade','Percentual_Divergencia','Percentual_Avarias_Volume',
+  'Percentual_Avarias_Valor','Entradas','Saidas','Movimentacao_Total','Parecer'
+];
+function sanitizePublicRows(rows){
+  return (rows||[]).map(r=>Object.fromEntries(PUBLIC_FIELDS.map(k=>[k,r[k]??''])));
+}
+async function sha256Hex(value){
+  const bytes=new TextEncoder().encode(String(value));
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return [...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function isAdminMode(){return APP_MODE==='admin'}
+function applyModeUI(){
+  document.body.classList.toggle('mode-admin',isAdminMode());
+  document.body.classList.toggle('mode-public',!isAdminMode());
+  const btn=$('#adminAccessBtn');
+  if(btn)btn.textContent=isAdminMode()?'↩ Sair do Admin':'🔒 Acesso Administrativo';
+  if($('#syncNowBtn'))$('#syncNowBtn').textContent=isAdminMode()?'⟳ Sincronizar agora':'⟳ Atualizar apresentação';
+  if($('#refreshBtn'))$('#refreshBtn').textContent=isAdminMode()?'⟳ Atualizar Dados':'⟳ Atualizar Dados';
+  if(!isAdminMode()&&$('#tab-acoes')?.classList.contains('active'))activateTab('resumo');
+  updateLiveInfo();
+  updateSourceUI();
+}
+function openAdminPasswordModal(){
+  $('#adminPasswordInput').value='';
+  $('#adminPasswordModal').classList.add('open');
+  $('#adminPasswordModal').setAttribute('aria-hidden','false');
+  setTimeout(()=>$('#adminPasswordInput').focus(),60);
+}
+function closeAdminPasswordModal(){
+  $('#adminPasswordModal').classList.remove('open');
+  $('#adminPasswordModal').setAttribute('aria-hidden','true');
+}
+async function unlockAdmin(){
+  const value=$('#adminPasswordInput').value;
+  const hash=await sha256Hex(value);
+  if(hash!==ADMIN_PASSWORD_SHA256){toast('Senha administrativa incorreta.','bad');$('#adminPasswordInput').select();return}
+  APP_MODE='admin';sessionStorage.setItem('gtf_admin_session','1');
+  DATA=JSON.parse(localStorage.getItem('gtf_audit_cached_data')||'null')||DATA;
+  closeAdminPasswordModal();applyModeUI();initFilters();renderAll();
+  toast('Modo Administrador liberado. Para acessar o OneDrive, entre com a conta Microsoft.','good');
+}
+async function exitAdmin(){
+  sessionStorage.removeItem('gtf_admin_session');APP_MODE='public';
+  await loadPublicData({silent:true});
+  applyModeUI();activateTab('resumo');toast('Modo Público ativado.','good');
+}
+async function loadPublicData({silent=false}={}){
+  try{
+    const res=await fetch(`${PUBLIC_DATA_URL}?v=${Date.now()}`,{cache:'no-store'});
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const payload=await res.json();
+    const rows=Array.isArray(payload)?payload:(payload.data||[]);
+    if(!Array.isArray(rows)||!rows.length)throw new Error('Publicação pública sem registros.');
+    PUBLIC_META=Array.isArray(payload)?{generatedAt:'',rowCount:rows.length}:(payload.meta||{rowCount:rows.length});
+    const clean=cleanRows(rows);
+    localStorage.setItem('gtf_public_cached_data',JSON.stringify({meta:PUBLIC_META,data:clean}));
+    if(!isAdminMode())setData(clean,{cache:false});
+    if($('#publicPublishedAt'))$('#publicPublishedAt').textContent=PUBLIC_META.generatedAt?`Publicado em ${PUBLIC_META.generatedAt}`:`${clean.length} auditoria(s) publicadas`;
+    if(!silent)toast(`Apresentação atualizada: ${clean.length} auditoria(s).`,'good');
+    return clean;
+  }catch(e){
+    const cached=JSON.parse(localStorage.getItem('gtf_public_cached_data')||'null');
+    if(cached?.data?.length){
+      PUBLIC_META=cached.meta||{};
+      if(!isAdminMode())setData(cached.data,{cache:false});
+      if(!silent)toast('Sem acesso à publicação mais recente. Exibindo a última versão pública salva neste dispositivo.','warn');
+      return cached.data;
+    }
+    if(!isAdminMode())setData(JSON.parse(JSON.stringify(DEFAULT_DATA)),{cache:false});
+    if(!silent)toast('dados_publicos.json ainda não foi publicado. Exibindo a base inicial do projeto.','warn');
+    return DATA;
+  }
+}
+function downloadPublicSnapshot(){
+  if(!isAdminMode()){toast('Entre no modo Administrador.','warn');return}
+  const rows=sanitizePublicRows(DATA);
+  const payload={
+    meta:{
+      generatedAt:new Intl.DateTimeFormat('pt-BR',{dateStyle:'short',timeStyle:'medium'}).format(new Date()),
+      generatedAtISO:new Date().toISOString(),
+      rowCount:rows.length,
+      source:'GTF Auditoria 360 • publicação controlada',
+      version:1
+    },
+    data:rows
+  };
+  localStorage.setItem('gtf_public_cached_data',JSON.stringify(payload));
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dados_publicos.json';a.click();URL.revokeObjectURL(a.href);
+  toast('dados_publicos.json gerado. Substitua esse arquivo no repositório GitHub para atualizar todos os visitantes.','good');
+}
+
 
 function currentData(){
   const filters={Filial:$('#fFilial').value,Armazem:$('#fArmazem').value,Grupo:$('#fGrupo').value,Auditor:$('#fAuditor').value,Mes_Referencia:$('#fMes').value};
@@ -779,6 +952,7 @@ function setData(rows,{cache=true}={}){
   initFilters();renderAll();updateSourceUI();
 }
 function sourceLabel(){
+  if(!isAdminMode()) return 'Apresentação Pública';
   if(SOURCE.type==='graph') return SOURCE.fileName ? `OneDrive direto • ${SOURCE.fileName}` : 'Microsoft OneDrive direto';
   if(SOURCE.type==='local') return SOURCE.fileName ? `Excel local • ${SOURCE.fileName}` : 'Excel local';
   return 'Demonstração';
@@ -888,7 +1062,14 @@ async function refreshData({askPermission=true,fromModal=false}={}){
 }
 
 $('#fileInput').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{SOURCE.type='local';SOURCE.fileName=f.name;CURRENT_LOCAL_FILE=null;const rows=await rowsFromFile(f);SOURCE.lastUpdated=nowBR();persistSource();setData(rows);toast(`${rows.length} registro(s) carregado(s).`,'good')}catch(err){toast('Erro: '+err.message,'bad')}finally{e.target.value=''}});
-$('#refreshBtn').addEventListener('click',()=>refreshData({askPermission:true}).catch(()=>{}));
+$('#refreshBtn').addEventListener('click',()=>{if(isAdminMode())refreshData({askPermission:true}).catch(()=>{});else loadPublicData().catch(()=>{})});
+$('#adminAccessBtn').addEventListener('click',()=>{if(isAdminMode())exitAdmin();else openAdminPasswordModal()});
+$('#adminPasswordCloseBtn').addEventListener('click',closeAdminPasswordModal);
+$('#adminPasswordCancelBtn').addEventListener('click',closeAdminPasswordModal);
+$('#adminPasswordSubmitBtn').addEventListener('click',unlockAdmin);
+$('#adminPasswordInput').addEventListener('keydown',e=>{if(e.key==='Enter')unlockAdmin()});
+$('#adminPasswordModal').addEventListener('click',e=>{if(e.target.id==='adminPasswordModal')closeAdminPasswordModal()});
+$('#publishPublicBtn').addEventListener('click',downloadPublicSnapshot);
 $('#sourceBtn').addEventListener('click',openSourceModal);$('#sourceCloseBtn').addEventListener('click',closeSourceModal);$('#sourceCancelBtn').addEventListener('click',closeSourceModal);$('#sourceModal').addEventListener('click',e=>{if(e.target.id==='sourceModal')closeSourceModal()});$('#sourceType').addEventListener('change',toggleSourceFields);
 $('#openOneDriveBtn').addEventListener('click',()=>{const u=$('#oneDriveUrl').value.trim()||SOURCE.oneDriveUrl;if(u)window.open(u,'_blank','noopener,noreferrer')});
 $('#msLoginBtn').addEventListener('click',async()=>{try{readGraphConfigFromForm();await loginMicrosoft()}catch(e){toast(authErrorText(e),'bad')}});
@@ -922,7 +1103,7 @@ function authErrorText(e){
   return `${code?code+': ':''}${msg}`.replace(/\s+/g,' ').slice(0,700);
 }
 async function initMicrosoftRedirect(){
-  if(SOURCE.type!=='graph'||!SOURCE.clientId||location.protocol==='file:')return false;
+  if(!isAdminMode()||SOURCE.type!=='graph'||!SOURCE.clientId||location.protocol==='file:')return false;
   const app=buildMsal();
   try{
     const result=await app.handleRedirectPromise();
@@ -948,17 +1129,25 @@ async function initMicrosoftRedirect(){
 let deferredInstallPrompt=null, autoTimer=null, nextTimer=null, nextAt=0;
 function updateOnlineState(){const on=navigator.onLine;$('#onlineText').textContent=on?'Online':'Offline';$('#onlineDot').classList.toggle('offline',!on)}
 window.addEventListener('online',()=>{updateOnlineState();toast('Conexão restaurada.','good')});window.addEventListener('offline',()=>{updateOnlineState();toast('Você está offline. O app continua com os últimos dados salvos.','warn')});updateOnlineState();
-function updateLiveInfo(){if($('#liveSource'))$('#liveSource').textContent=sourceLabel();if($('#liveLastSync'))$('#liveLastSync').textContent=SOURCE.lastUpdated||'não sincronizado'}
+function updateLiveInfo(){
+  if($('#liveSource'))$('#liveSource').textContent=sourceLabel();
+  if($('#liveLastSync'))$('#liveLastSync').textContent=isAdminMode()?(SOURCE.lastUpdated||'não sincronizado'):(PUBLIC_META.generatedAt||'aguardando publicação');
+}
 function startAutoRefresh(enabled){
-  clearInterval(autoTimer);clearInterval(nextTimer);localStorage.setItem('gtf_auto_refresh',enabled?'yes':'no');
-  if(!enabled){$('#nextSync').textContent='manual';return}
+  clearInterval(autoTimer);clearInterval(nextTimer);
+  if(isAdminMode())localStorage.setItem('gtf_auto_refresh',enabled?'yes':'no');
+  const active=isAdminMode()?enabled:true;
+  if(!active){$('#nextSync').textContent='manual';return}
   const schedule=()=>{nextAt=Date.now()+60000};schedule();
   nextTimer=setInterval(()=>{$('#nextSync').textContent=`${Math.max(0,Math.ceil((nextAt-Date.now())/1000))}s`},1000);
-  autoTimer=setInterval(async()=>{schedule();if(SOURCE.type==='demo')return;try{await refreshData({askPermission:false})}catch(e){}updateLiveInfo()},60000);
+  autoTimer=setInterval(async()=>{schedule();try{
+    if(isAdminMode()){if(SOURCE.type!=='demo')await refreshData({askPermission:false})}
+    else await loadPublicData({silent:true});
+  }catch(e){}updateLiveInfo()},60000);
 }
-$('#autoRefreshToggle').checked=localStorage.getItem('gtf_auto_refresh')==='yes';startAutoRefresh($('#autoRefreshToggle').checked);$('#autoRefreshToggle').addEventListener('change',e=>startAutoRefresh(e.target.checked));
-$('#syncNowBtn').addEventListener('click',async()=>{try{await refreshData({askPermission:true});updateLiveInfo()}catch(e){}});
-window.addEventListener('focus',()=>{if($('#autoRefreshToggle').checked&&SOURCE.type!=='demo')refreshData({askPermission:false}).then(updateLiveInfo).catch(()=>{})});
+$('#autoRefreshToggle').checked=localStorage.getItem('gtf_auto_refresh')==='yes';$('#autoRefreshToggle').addEventListener('change',e=>startAutoRefresh(e.target.checked));
+$('#syncNowBtn').addEventListener('click',async()=>{try{if(isAdminMode())await refreshData({askPermission:true});else await loadPublicData();updateLiveInfo()}catch(e){}});
+window.addEventListener('focus',()=>{if(isAdminMode()){if($('#autoRefreshToggle').checked&&SOURCE.type!=='demo')refreshData({askPermission:false}).then(updateLiveInfo).catch(()=>{})}else loadPublicData({silent:true}).then(updateLiveInfo).catch(()=>{})});
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstallPrompt=e;$('#installBtn').classList.add('show')});
 $('#installBtn').addEventListener('click',async()=>{if(!deferredInstallPrompt){toast('Para instalar, abra esta PWA em um endereço HTTPS.','warn');return}deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;$('#installBtn').classList.remove('show')});
 window.addEventListener('appinstalled',()=>toast('GTF Auditoria 360 instalada.','good'));
@@ -972,11 +1161,19 @@ const originalUpdateSourceUI=updateSourceUI;updateSourceUI=function(){originalUp
 const originalRefreshData=refreshData;refreshData=async function(opts={}){const l=$('#livebar');l&&l.classList.add('sync-flash');try{return await originalRefreshData(opts)}finally{l&&l.classList.remove('sync-flash');updateLiveInfo()}};
 updateLiveInfo();
 
+applyModeUI();
 initFilters();renderAll();updateSourceUI();
 (async()=>{
-  await initMicrosoftRedirect();
-  updateMsAccountUI();
-  if(SOURCE.type!=='demo'&&SOURCE.refreshOnOpen==='yes'&&currentMsAccount())setTimeout(()=>refreshData({askPermission:false}).catch(()=>{}),800);
+  if(isAdminMode()){
+    await initMicrosoftRedirect();
+    updateMsAccountUI();
+    if(SOURCE.type!=='demo'&&SOURCE.refreshOnOpen==='yes'&&currentMsAccount())setTimeout(()=>refreshData({askPermission:false}).catch(()=>{}),800);
+    startAutoRefresh($('#autoRefreshToggle').checked);
+  }else{
+    updateMsAccountUI();
+    await loadPublicData({silent:true});
+    startAutoRefresh(true);
+  }
 })();
 </script>
 </body>
